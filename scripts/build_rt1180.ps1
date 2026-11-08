@@ -6,9 +6,16 @@ $SdkExamples = Join-Path $SdkRoot "mcuxsdk/examples/multicore_examples"
 $Template = Join-Path $SdkExamples "hello_world"
 $Overlay = Join-Path $SdkExamples "aied_dual_core_led_toggle"
 $BuildDir = if ($env:RT1180_BUILD_DIR) { $env:RT1180_BUILD_DIR } else { Join-Path $ProjectRoot "build/rt1180-dual-core-led-toggle" }
+$VenvDir = Join-Path $ProjectRoot ".venv"
+$West = Join-Path $VenvDir "Scripts/west.exe"
 $Marker = ".aied-generated-overlay"
 
-foreach ($Tool in @("west", "cmake", "ninja")) {
+if (-not (Test-Path $West)) {
+    throw "The project Python environment is missing. Run scripts/setup_sdk.ps1 first."
+}
+$env:Path = (Join-Path $VenvDir "Scripts") + ";" + $env:Path
+
+foreach ($Tool in @("cmake", "ninja")) {
     if (-not (Get-Command $Tool -ErrorAction SilentlyContinue)) {
         throw "$Tool is required and must be on PATH."
     }
@@ -44,7 +51,7 @@ if (-not (Test-Path (Join-Path $Overlay "primary/sysbuild.cmake")) -or -not (Tes
 
 Push-Location $SdkRoot
 try {
-    west build -b evkmimxrt1180 --sysbuild (Join-Path $Overlay "primary") --config flexspi_nor_debug --toolchain armgcc -Dcore_id=cm33 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always -d $BuildDir
+    & $West build -b evkmimxrt1180 --sysbuild (Join-Path $Overlay "primary") --config flexspi_nor_debug --toolchain armgcc -Dcore_id=cm33 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always -d $BuildDir
     if ($LASTEXITCODE -ne 0) { throw "RT1180 SysBuild failed." }
 }
 finally {
