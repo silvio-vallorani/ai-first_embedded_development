@@ -18,3 +18,4 @@ Statuses: Proposed, Accepted, Deprecated, Superseded. Accepted means the archite
 | [0012](ADR-0012-documentation-ai-workflow.md) | Documentation and AI workflow | Accepted |
 | [0013](ADR-0013-slot-swap-and-sector-reserve.md) | Slot swap and 50% sector reserve | Accepted direction; implementation pending |
 | [0014](ADR-0014-mcuboot-phase1-nxp-layout.md) | MCUboot phase 1 with NXP reference layout | Accepted for phase 1; validation pending |
+| [0015](ADR-0015-logging-and-persistent-log-region.md) | Logging service and persistent log region | Accepted; validation pending |

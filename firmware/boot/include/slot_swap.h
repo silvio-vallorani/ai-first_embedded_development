@@ -65,8 +65,7 @@ typedef struct {
 typedef struct {
     bool (*load_journal)(void *context, aied_swap_journal_t *journal);
     bool (*store_journal)(void *context, const aied_swap_journal_t *journal);
-    bool (*swap_sector)(void *context, uint32_t core_id, uint32_t sector_index,
-                        aied_swap_direction_t direction);
+    bool (*swap_sector)(void *context, uint32_t core_id, uint32_t sector_index, aied_swap_direction_t direction);
     bool (*verify_pair)(void *context);
     bool (*commit_pair)(void *context, uint32_t generation);
     void *context;
@@ -81,9 +80,7 @@ typedef struct {
  * @param cm7_sectors Number of CM7 sectors to swap (non-zero).
  * @return true when the PREPARED record is persisted.
  */
-bool aied_slot_swap_prepare(const aied_swap_backend_t *backend,
-                            uint32_t cm33_sectors,
-                            uint32_t cm7_sectors);
+bool aied_slot_swap_prepare(const aied_swap_backend_t *backend, uint32_t cm33_sectors, uint32_t cm7_sectors);
 
 /**
  * @brief Evaluate and advance the update transaction at boot, before any core starts.
@@ -95,8 +92,7 @@ bool aied_slot_swap_prepare(const aied_swap_backend_t *backend,
  * @param max_trial_boots Unconfirmed probationary boots allowed before revert (non-zero).
  * @return The action the boot manager must take. Neither core may start on RECOVERY.
  */
-aied_boot_action_t aied_slot_swap_boot(const aied_swap_backend_t *backend,
-                                       uint32_t max_trial_boots);
+aied_boot_action_t aied_slot_swap_boot(const aied_swap_backend_t *backend, uint32_t max_trial_boots);
 
 /**
  * @brief Confirm the pair running on probation after both cores passed health checks.

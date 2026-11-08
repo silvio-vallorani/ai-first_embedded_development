@@ -25,6 +25,29 @@ jobs:
       - name: Unit tests
         run: ctest --preset host-debug
 
+  format:
+    name: C formatting (clang-format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format (same version as requirements-dev.txt)
+        run: pipx install clang-format==20.1.8
+      - name: Check formatting
+        run: git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror --style=file
+
+  log-tools:
+    name: Log retrieval tool self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install tool dependencies
+        run: python -m pip install littlefs-python==0.19.0 pyserial==3.5
+      - name: Self-test
+        run: python scripts/rt1180_logs.py selftest
+
   coverage:
     name: Host test coverage
     runs-on: ubuntu-latest

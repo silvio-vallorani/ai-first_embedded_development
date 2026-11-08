@@ -34,10 +34,10 @@ Keep the serial terminal open for the whole test. Record the console output of e
 .venv/Scripts/python scripts/rt1180_mcuboot.py flash initial
 ```
 
-This erases the whole flash, programs MCUboot and programs v1 into the primary slot. The board resets after programming.
+This erases the whole flash (persistent logs included), programs MCUboot and programs v1 into the primary slot. The board resets after programming.
 
 Pass:
-- The console shows the MCUboot banner, then `AIED dual-core LED toggle 1.0.0 (toggle period 1000000 us)`, `CM7 ready` and `MCUboot: image state ..., nothing to confirm`.
+- The console shows the MCUboot banner, then log records (format in `LOGGING.md`): `<inf> log: boot 1, firmware 1.0.0, log storage formatted`, `<inf> app: AIED dual-core LED toggle 1.0.0 (toggle period 1000000 us)`, `<inf> app: CM7 ready` and `<inf> app: MCUboot: image state ..., nothing to confirm`.
 - The green user LED toggles every 1 s.
 
 ### T2: update to v2, confirmed
@@ -64,6 +64,20 @@ Press RESET.
 Pass:
 - MCUboot reports a test swap, then the console shows `3.0.0` and `confirmation disabled in this build`. The LED toggles every 100 ms.
 - Press RESET again: MCUboot reverts the swap, the console shows `2.0.0`, and the LED toggles every 250 ms again.
+
+### T4: the persistent log records the whole sequence
+
+Close the serial terminal (it holds the port), then:
+
+```sh
+.venv/Scripts/python scripts/rt1180_logs.py uart --port COM5      # your MCU-Link VCOM port
+```
+
+Pass:
+- The command reports status `END` and writes the files to `build/logs/uart-.../`.
+- The files contain, in order, the boot records `boot 1, firmware 1.0.0`, then `2.0.0` with `test image confirmed`, `2.0.0`, `3.0.0` with `confirmation disabled`, and `2.0.0` again. Every line starts with a timestamp and ends with a newline.
+- Power-cycle the board (unplug USB), then repeat the command: the same records are still there, followed by a new boot record.
+- Optional, debugger path: `py -3.14 scripts/rt1180_logs.py flash` produces the same files.
 
 ## If a step fails
 

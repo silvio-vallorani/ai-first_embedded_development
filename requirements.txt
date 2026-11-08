@@ -6,3 +6,6 @@ cryptography==44.0.2
 intelhex==2.3.0
 click==8.1.8
 cbor2==5.6.5
+# Log retrieval over UART (scripts/rt1180_logs.py uart). littlefs-python, needed by
+# `rt1180_logs.py flash`, is not listed: it has no wheel for every Python version.
+pyserial==3.5

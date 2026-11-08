@@ -9,6 +9,7 @@ The firmware currently uses NXP's MCUboot reference layout, not the target layou
 | MCUboot | 0x28000000 | 256 KiB | FCB at +0x400, boot container at +0x1000, bootloader |
 | Primary slot | 0x28040000 | 2 MiB | Active image: header, CM33 code with embedded CM7 image, trailer |
 | Secondary slot | 0x28240000 | 2 MiB | Candidate image |
+| Persistent logs | 0x287E0000 | 128 KiB | littlefs, rotating text log files (ADR-0015); same region as the target layout |
 
 The rest of the device is unused in phase 1. The target layout below remains the design goal for phase 2.
 

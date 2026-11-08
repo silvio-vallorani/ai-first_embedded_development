@@ -6,6 +6,8 @@ The first host test target uses CMake + CTest and a small assertion runner. Boot
 
 The slot-swap tests cut power at every operation of the forward swap, the revert and the confirmation, reboot, and assert that the result is always a whole pair: committed or trialled new pair, or reverted previous pair, never a mixed one.
 
+The logging tests cover the record format (timestamp, one line per record, truncation), level filtering, immediate and deferred backends, ring-buffer overflow and its report, file rotation, the boot counter, write failures and the dump, using the in-memory file system `tests/mocks/fake_log_fs.*`. `scripts/rt1180_logs.py selftest` checks the PC-side UART and littlefs parsers.
+
 CI builds and runs the host tests with GCC and Clang, with ASan/UBSan, and with gcov instrumentation. The `host-coverage` artifact contains the gcovr report. No coverage threshold is enforced yet.
 
 Run:
@@ -15,6 +17,15 @@ cmake --preset host-debug
 cmake --build --preset host-debug
 ctest --preset host-debug
 ```
+
+On a machine without gcc or clang (for example the Windows development PC), install the developer tools into the project `.venv` and use the helper, which falls back to `zig cc`:
+
+```sh
+.venv/Scripts/python -m pip install -r requirements-dev.txt
+python scripts/host_tests.py
+```
+
+`requirements-dev.txt` also pins `clang-format`. A single style, defined by `.clang-format` (Linux brace style), applies to all project C code, examples included; CI fails on unformatted C files. In Claude Code sessions the project hooks (`.claude/settings.json`) format every edited C file and re-run the host tests automatically.
 
 ## Recommended next tools
 

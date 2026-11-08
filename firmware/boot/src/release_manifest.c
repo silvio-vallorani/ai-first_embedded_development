@@ -10,19 +10,15 @@ static bool is_all_zero(const uint8_t *data, size_t length)
     return true;
 }
 
-static bool image_is_acceptable(const aied_image_descriptor_t *image,
-                                size_t capacity,
+static bool image_is_acceptable(const aied_image_descriptor_t *image, size_t capacity,
                                 uint32_t minimum_security_version)
 {
     return (image->image_size != 0U) && ((size_t)image->image_size <= capacity) &&
-           !is_all_zero(image->sha256, AIED_SHA256_SIZE) &&
-           (image->security_version >= minimum_security_version);
+           !is_all_zero(image->sha256, AIED_SHA256_SIZE) && (image->security_version >= minimum_security_version);
 }
 
-bool aied_manifest_validate(const aied_release_manifest_t *manifest,
-                            const aied_manifest_policy_t *policy,
-                            aied_signature_verify_fn verify_signature,
-                            void *context)
+bool aied_manifest_validate(const aied_release_manifest_t *manifest, const aied_manifest_policy_t *policy,
+                            aied_signature_verify_fn verify_signature, void *context)
 {
     if ((manifest == NULL) || (policy == NULL) || (verify_signature == NULL)) {
         return false;
@@ -38,10 +34,8 @@ bool aied_manifest_validate(const aied_release_manifest_t *manifest,
         return false;
     }
 
-    if (!image_is_acceptable(&manifest->cm33, policy->cm33_capacity,
-                             policy->minimum_security_version) ||
-        !image_is_acceptable(&manifest->cm7, policy->cm7_capacity,
-                             policy->minimum_security_version)) {
+    if (!image_is_acceptable(&manifest->cm33, policy->cm33_capacity, policy->minimum_security_version) ||
+        !image_is_acceptable(&manifest->cm7, policy->cm7_capacity, policy->minimum_security_version)) {
         return false;
     }
 

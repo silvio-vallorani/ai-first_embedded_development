@@ -44,7 +44,11 @@ The resulting images are `led_toggle_primary_core_cm33.elf` (CM33) and `led_togg
 
 Options for update tests: `--version X.Y.Z` (printed at start-up), `--toggle-period-us N`, and `--no-confirm` (never confirm a test image, to test rollback). `scripts/rt1180_mcuboot.py` builds, signs and flashes the complete update-test set; see `docs/engineering/MCUBOOT_UPDATE_TEST.md`.
 
-At start-up CM33 prints the version, the toggle period, `CM7 ready` and the MCUboot image state on the debug UART (115200 baud).
+At start-up CM33 logs the boot number, the version, the toggle period, `CM7 ready` and the MCUboot image state. Logs go to the debug UART (115200 baud) and to rotating text files in flash; see `docs/engineering/LOGGING.md`.
+
+### Logging (both variants)
+
+The build scripts always append `log/primary.cmake` and `log/primary.conf`. These add the logging service (`firmware/services/log`), its MCUXpresso port (`platform/log/mcux`) and the littlefs file-system adapter (`platform/storage/littlefs`), and enable littlefs + `mflash` on the log region at QSPI offset 0x7E0000 (ADR-0015). The CM33 main loop is non-blocking: it toggles the LED on time and calls `aied_log_port_poll()` continuously, which writes buffered records and answers the UART `logdump` command.
 
 ### CM7 image address and packaging
 

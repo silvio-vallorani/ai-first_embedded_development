@@ -2,11 +2,12 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "aied_log.h"
+#include "aied_log_port.h"
 #include "app_events.h"
 #include "app.h"
 #include "board.h"
 #include "fsl_common.h"
-#include "fsl_debug_console.h"
 #include "mcmgr.h"
 
 #if defined(AIED_MCUBOOT_APP)
@@ -14,13 +15,27 @@
 #include "mflash_drv.h"
 #endif
 
-#define APP_CM7_READY_TIMEOUT_ITERATIONS (10000000UL)
+LOG_MODULE_REGISTER(app, LOG_LEVEL_INF);
+
+#define APP_CM7_READY_TIMEOUT_US (2000000ULL)
 
 #if !defined(APP_SECONDARY_CORE)
 #define APP_SECONDARY_CORE kMCMGR_Core1
 #endif
 
 static volatile bool s_cm7_ready = false;
+
+/**
+ * @brief Stop the application after a fatal error, keeping the log alive.
+ *
+ * The error record is written to flash and the UART `logdump` command keeps working.
+ */
+static void app_halt(void)
+{
+    for (;;) {
+        aied_log_port_poll();
+    }
+}
 
 #if defined(AIED_MCUBOOT_APP)
 /**
@@ -34,28 +49,21 @@ static void app_confirm_image(void)
 {
     uint32_t state = kSwapType_None;
 
-    if ((mflash_drv_init() != 0) || (bl_get_image_state(0U, &state) != kStatus_Success))
-    {
-        (void)PRINTF("MCUboot: unable to read image state\r\n");
+    if ((mflash_drv_init() != 0) || (bl_get_image_state(0U, &state) != kStatus_Success)) {
+        LOG_ERR("MCUboot: unable to read image state");
         return;
     }
 #if defined(AIED_SKIP_IMAGE_CONFIRM)
-    (void)PRINTF("MCUboot: image state %u, confirmation disabled in this build\r\n", (unsigned)state);
+    LOG_WRN("MCUboot: image state %u, confirmation disabled in this build", (unsigned)state);
 #else
-    if (state == kSwapType_Testing)
-    {
-        if (bl_update_image_state(0U, kSwapType_Permanent) == kStatus_Success)
-        {
-            (void)PRINTF("MCUboot: test image confirmed (permanent)\r\n");
+    if (state == kSwapType_Testing) {
+        if (bl_update_image_state(0U, kSwapType_Permanent) == kStatus_Success) {
+            LOG_INF("MCUboot: test image confirmed (permanent)");
+        } else {
+            LOG_ERR("MCUboot: image confirmation FAILED");
         }
-        else
-        {
-            (void)PRINTF("MCUboot: image confirmation FAILED\r\n");
-        }
-    }
-    else
-    {
-        (void)PRINTF("MCUboot: image state %u, nothing to confirm\r\n", (unsigned)state);
+    } else {
+        LOG_INF("MCUboot: image state %u, nothing to confirm", (unsigned)state);
     }
 #endif
 }
@@ -68,14 +76,11 @@ static void app_confirm_image(void)
  * @param eventData Event payload.
  * @param context Optional callback context.
  */
-static void app_remote_event_handler(mcmgr_core_t coreNum,
-                                     uint16_t eventData,
-                                     void *context)
+static void app_remote_event_handler(mcmgr_core_t coreNum, uint16_t eventData, void *context)
 {
     (void)context;
 
-    if ((coreNum == kMCMGR_Core1) && (eventData == APP_EVENT_CM7_READY))
-    {
+    if ((coreNum == kMCMGR_Core1) && (eventData == APP_EVENT_CM7_READY)) {
         s_cm7_ready = true;
     }
 }
@@ -87,21 +92,17 @@ static void app_remote_event_handler(mcmgr_core_t coreNum,
  */
 int main(void)
 {
-    uint32_t iteration = 0U;
+    uint64_t deadline;
 
     (void)MCMGR_Init();
     BOARD_InitHardware();
+    (void)aied_log_port_init(APP_VERSION_STRING);
 
-    (void)PRINTF("\r\nAIED dual-core LED toggle %s (toggle period %u us)\r\n", APP_VERSION_STRING,
-                 (unsigned)APP_TOGGLE_PERIOD_US);
+    LOG_INF("AIED dual-core LED toggle %s (toggle period %u us)", APP_VERSION_STRING, (unsigned)APP_TOGGLE_PERIOD_US);
 
-    if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent,
-                            app_remote_event_handler,
-                            NULL) != kStatus_MCMGR_Success)
-    {
-        for (;;)
-        {
-        }
+    if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent, app_remote_event_handler, NULL) != kStatus_MCMGR_Success) {
+        LOG_ERR("MCMGR event registration failed");
+        app_halt();
     }
 
 #ifdef CORE1_IMAGE_COPY_TO_RAM
@@ -112,53 +113,49 @@ int main(void)
     {
         uint32_t core1_image_size = get_core1_image_size();
 
-        (void)memcpy((void *)(char *)CORE1_BOOT_ADDRESS,
-                     (const void *)CORE1_IMAGE_START,
-                     core1_image_size);
+        (void)memcpy((void *)(char *)CORE1_BOOT_ADDRESS, (const void *)CORE1_IMAGE_START, core1_image_size);
 
 #ifdef APP_INVALIDATE_CACHE_FOR_SECONDARY_CORE_IMAGE_MEMORY
-        invalidate_cache_for_core1_image_memory((uint32_t)CORE1_BOOT_ADDRESS,
-                                                core1_image_size);
+        invalidate_cache_for_core1_image_memory((uint32_t)CORE1_BOOT_ADDRESS, core1_image_size);
 #endif
     }
 #endif
 
-    if (MCMGR_StartCore(APP_SECONDARY_CORE,
-                        (void *)(char *)CORE1_BOOT_ADDRESS,
-                        2U,
-                        kMCMGR_Start_Synchronous) != kStatus_MCMGR_Success)
-    {
-        for (;;)
-        {
-        }
+    if (MCMGR_StartCore(APP_SECONDARY_CORE, (void *)(char *)CORE1_BOOT_ADDRESS, 2U, kMCMGR_Start_Synchronous) !=
+        kStatus_MCMGR_Success) {
+        LOG_ERR("CM7 start failed");
+        app_halt();
     }
 
-    while (!s_cm7_ready)
-    {
-        if (++iteration >= APP_CM7_READY_TIMEOUT_ITERATIONS)
-        {
-            (void)PRINTF("CM7 ready timeout\r\n");
-            for (;;)
-            {
-            }
+    deadline = aied_log_port_now_us() + APP_CM7_READY_TIMEOUT_US;
+    while (!s_cm7_ready) {
+        aied_log_port_poll();
+        if (aied_log_port_now_us() >= deadline) {
+            LOG_ERR("CM7 ready timeout");
+            app_halt();
         }
     }
-    (void)PRINTF("CM7 ready\r\n");
+    LOG_INF("CM7 ready");
 
 #if defined(AIED_MCUBOOT_APP)
     app_confirm_image();
 #endif
 
-    for (;;)
-    {
-        SDK_DelayAtLeastUs(APP_TOGGLE_PERIOD_US, SystemCoreClock);
+    /* Non-blocking loop: logs are flushed and the UART command is served between toggles. */
+    deadline = aied_log_port_now_us() + APP_TOGGLE_PERIOD_US;
+    for (;;) {
+        uint64_t now;
 
-        if (MCMGR_TriggerEvent(kMCMGR_Core1,
-                               kMCMGR_RemoteApplicationEvent,
-                               APP_EVENT_TOGGLE_LED) != kStatus_MCMGR_Success)
-        {
-            for (;;)
-            {
+        aied_log_port_poll();
+        now = aied_log_port_now_us();
+        if (now >= deadline) {
+            /* After a long flash operation, realign instead of toggling in a burst. */
+            deadline = ((now - deadline) >= APP_TOGGLE_PERIOD_US) ? (now + APP_TOGGLE_PERIOD_US)
+                                                                  : (deadline + APP_TOGGLE_PERIOD_US);
+            if (MCMGR_TriggerEvent(kMCMGR_Core1, kMCMGR_RemoteApplicationEvent, APP_EVENT_TOGGLE_LED) !=
+                kStatus_MCMGR_Success) {
+                LOG_ERR("LED toggle event failed");
+                app_halt();
             }
         }
     }

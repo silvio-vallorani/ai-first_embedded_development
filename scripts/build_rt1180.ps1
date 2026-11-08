@@ -93,8 +93,12 @@ if ((Select-String -Path $OverlayFiles -Pattern $ImageNamePattern, $WorkspacePat
     throw "The NXP template image names could not be renamed."
 }
 
-# Variant and build-time application parameters (CM33 primary image only).
+# Logging service (both variants) and variant/build-time parameters (CM33 primary image only).
 $PrimaryCMake = Join-Path $Overlay "primary/CMakeLists.txt"
+$PrimaryConf = Join-Path $Overlay "primary/prj.conf"
+[System.IO.File]::AppendAllText($PrimaryCMake, "`nset(AIED_ROOT `"$($ProjectRoot -replace '\\', '/')`")`n")
+[System.IO.File]::AppendAllText($PrimaryCMake, [System.IO.File]::ReadAllText((Join-Path $ExampleDir "log/primary.cmake")))
+[System.IO.File]::AppendAllText($PrimaryConf, [System.IO.File]::ReadAllText((Join-Path $ExampleDir "log/primary.conf")))
 if ($McuBoot) {
     [System.IO.File]::AppendAllText($PrimaryCMake, [System.IO.File]::ReadAllText((Join-Path $ExampleDir "mcuboot/primary.cmake")))
     [System.IO.File]::AppendAllText((Join-Path $Overlay "primary/prj.conf"), [System.IO.File]::ReadAllText((Join-Path $ExampleDir "mcuboot/primary.conf")))
