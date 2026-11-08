@@ -26,7 +26,7 @@ Install the following host tools:
 - Ninja
 - Arm GNU Toolchain 14.2.x (Arm GNU Toolchain 14.2.rel1)
 
-West and its Python dependencies are installed from the pinned `requirements.txt` into the repository's `.venv`. No global `pip install`, `pip --user`, or manual virtual-environment activation is required. CMake, Ninja, Git and the Arm GNU Toolchain remain system-level tools.
+West (pinned to 1.4.0) and its required Python dependencies are installed from `requirements.txt` into the repository's `.venv`. No global `pip install`, `pip --user`, or manual virtual-environment activation is required. CMake, Ninja, Git and the Arm GNU Toolchain remain system-level tools.
 
 Use the [NXP installation guide for SDK 26.09.00](https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/gsd/installation.html) for host-specific packages.
 
@@ -36,7 +36,7 @@ Use the [NXP installation guide for SDK 26.09.00](https://docs.mcuxpresso.nxp.co
 2. Install the recommended extensions when VS Code prompts you.
 3. Install Arm GNU Toolchain 14.2.rel1 and add its `bin` directory to `PATH`.
 4. Set `ARMGCC_DIR` to the toolchain installation root (the directory containing `bin`).
-5. Run **Terminal → Run Task → Setup MCUXpresso SDK**. This creates `.venv`, installs the pinned Python dependencies, initializes the manifest at `v26.09.00`, and fetches the repositories required by the EVK.
+5. Run **Terminal → Run Task → Setup MCUXpresso SDK**. This creates `.venv`, installs the pinned West package, initializes the manifest at `v26.09.00`, and fetches the repositories required by the EVK.
 6. Run **Terminal → Run Task → Build RT1180 dual-core firmware**.
 
 The SDK workspace defaults to a sibling directory named `mcuxpresso-sdk`. To use another location, set `MCUXPRESSO_SDK` to the directory that contains the West `.west` folder. Restart VS Code after changing persistent environment variables so its integrated terminal inherits them.
@@ -145,7 +145,7 @@ The GitHub Actions workflow `RT1189 embedded build` validates two distinct outpu
 1. The unmodified NXP CM33 + CM7 multicore baseline.
 2. This repository's CM33 + CM7 dual-core LED-toggle application, built through the NXP SysBuild project template.
 
-The workflow uses the same pinned `requirements.txt` and setup script as the local VS Code workflow, then uploads generated ELF, BIN, HEX and MAP files as a build artifact. A successful CI build confirms compilation and image packaging; it does not replace a physical EVK test of the LED, inter-core timing or boot behaviour.
+The workflow uses the same pinned West requirement and setup script as the local VS Code workflow, then uploads generated ELF, BIN, HEX and MAP files as a build artifact. A successful CI build confirms compilation and image packaging; it does not replace a physical EVK test of the LED, inter-core timing or boot behaviour.
 
 NXP documentation:
 - SDK 26.09.00 release: https://github.com/nxp-mcuxpresso/mcuxsdk-manifests/releases/tag/v26.09.00
