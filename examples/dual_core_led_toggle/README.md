@@ -34,6 +34,18 @@ For the application build, `scripts/build_rt1180.sh` (CI and Linux/macOS) or `sc
 
 The resulting images are `led_toggle_primary_core_cm33.elf` (CM33) and `led_toggle_secondary_core_cm7.elf` (CM7); CI fails if they are missing or if a template image name remains. This keeps the SDK project scaffolding and board support intact while compiling the application sources maintained in this repository. The generated overlay is not committed.
 
+### MCUboot variant (ADR-0014)
+
+`build_rt1180.sh --mcuboot` (or `build_rt1180.ps1 -McuBoot`) builds the same application for the MCUboot primary slot, into `build/rt1180-led-mcuboot`. It appends `mcuboot/primary.cmake` and `mcuboot/primary.conf` to the generated primary project:
+
+- NXP's MCUboot application linker (`ota_linker/MIMXRT1189xxxxx_cm33_flexspi_nor_mcuboot.ld`): the vector table is at 0x28040400, after the 1-KiB MCUboot header, and the CM7 image stays embedded in the CM33 image.
+- No FCB, XMCD or boot container (`XIP_BOOT_HEADER_ENABLE=0`): the Boot ROM starts MCUboot, not the application.
+- MCUboot application support and the `mflash` driver. After CM7 reports ready, CM33 marks a test image as permanent.
+
+Options for update tests: `--version X.Y.Z` (printed at start-up), `--toggle-period-us N`, and `--no-confirm` (never confirm a test image, to test rollback). `scripts/rt1180_mcuboot.py` builds, signs and flashes the complete update-test set; see `docs/engineering/MCUBOOT_UPDATE_TEST.md`.
+
+At start-up CM33 prints the version, the toggle period, `CM7 ready` and the MCUboot image state on the debug UART (115200 baud).
+
 ### CM7 image address and packaging
 
 The CM33 application includes the NXP board-specific `app.h`. For the MIMXRT1180-EVK SDK configuration, this supplies `CORE1_BOOT_ADDRESS` and the secondary-image linker symbols. The application uses those SDK definitions and, when `CORE1_IMAGE_COPY_TO_RAM` is enabled, performs the same secondary-image copy step as the NXP reference application.

@@ -4,6 +4,21 @@
 
 A release is one inseparable CM33 + CM7 pair. A signed manifest must include release ID, version, board/MCU compatibility, minimum bootloader version, image lengths, hashes, signatures, dependencies and pair compatibility. The boot manager rejects a mixed pair.
 
+## Phase-1 implementation (ADR-0014)
+
+The update path on target is NXP's MCUboot port with swap-move. The release pair is one signed MCUboot image (CM33 application with the CM7 image embedded), so MCUboot's own test, confirm and revert handling applies to the pair as a whole:
+
+| Transaction step | Phase-1 mechanism |
+|---|---|
+| Receive candidate | Debugger writes the signed, padded image to the secondary slot (UART xmodem planned) |
+| Validate | MCUboot verifies the ECDSA-P256 signature and image hash |
+| Swap, resumable | MCUboot swap-move with status in the slot trailer |
+| Probation | Image runs in MCUboot test state |
+| Commit | CM33 marks the image permanent after CM7 reports ready |
+| Rollback | MCUboot swaps back at the next reset if the test image was not confirmed |
+
+The host-tested journal state machine below describes the target transaction; it is not used on target in phase 1. Anti-rollback is not enforced in phase 1 (ADR-0008 open). The update test procedure is `docs/engineering/MCUBOOT_UPDATE_TEST.md`.
+
 ## Update transaction
 
 1. Receive a signed release into the inactive slot.

@@ -14,6 +14,7 @@ nav:
       - Wiki publishing: architecture/WIKI_PUBLISHING.md
   - Engineering:
       - Unit testing: engineering/UNIT_TESTING.md
+      - MCUboot update test: engineering/MCUBOOT_UPDATE_TEST.md
   - Toolchains:
       - MCUXpresso SDK: toolchains/MCUXPRESSO_SDK.md
   - API Reference: https://silvio-vallorani.github.io/ai-first_embedded_development/doxygen/

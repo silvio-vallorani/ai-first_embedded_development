@@ -1,5 +1,15 @@
 # Boot flow
 
+## Phase-1 implemented sequence (ADR-0014)
+
+1. The Boot ROM reads the FCB and boot container at 0x28000000 and starts MCUboot on CM33.
+2. MCUboot checks the secondary slot. If it holds a signed image marked for test, MCUboot swaps the slots (swap-move) and boots the new image in test state. If the previous boot ran a test image that was not confirmed, MCUboot swaps back first.
+3. MCUboot validates the ECDSA-P256 signature of the primary-slot image and jumps to it (0x28040400).
+4. The CM33 application copies the embedded CM7 image to CM7 TCM, starts CM7 and waits for the CM7-ready event.
+5. After CM7 is ready, CM33 confirms a test image (permanent). CM33 and CM7 are always one image, so they are always updated, confirmed or reverted together.
+
+## Target sequence
+
 ## Selected conceptual sequence
 
 1. NXP SoC Boot ROM executes and follows the configured boot source.

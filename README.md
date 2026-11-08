@@ -16,7 +16,9 @@ A multi-board, dual-core embedded firmware template for NXP i.MX RT1189-class de
 
 ## Repository status
 
-This is an initial architectural and host-testable software scaffold plus a first dual-core application source example. It is not a production bootloader, signed-image implementation, flash driver, or validated RT1189 board port. Hardware-dependent operations are deliberately behind interfaces. The dual-core LED example is built using the NXP-generated SysBuild project template.
+This is an initial architectural and host-testable software scaffold plus a first dual-core application source example. It is not a production bootloader, flash driver, or validated RT1189 board port. Hardware-dependent operations are deliberately behind interfaces. The dual-core LED example is built using the NXP-generated SysBuild project template.
+
+Phase 1 of the MCUboot integration (ADR-0014) uses NXP's MCUboot port and reference flash layout. The CM33 + CM7 pair is one signed image, updated, confirmed or reverted as a unit. Images are signed with NXP's public development key, which provides no security. See the [MCUboot update test](docs/engineering/MCUBOOT_UPDATE_TEST.md).
 
 ## Open in VS Code
 
