@@ -1,0 +1,18 @@
+board: mimxrt1180_evk
+mcu: MIMXRT1189
+cores: [m33, m7]
+external_memory:
+  qspi_nor:
+    family: Winbond W25Q128JWSIQ
+    board_population: Two devices (U10 and U12), each 128 Mbit, on FlexSPI1 A/B paths
+    selected_layout_scope: One 128-Mbit device / one 16-MiB address space
+    expected_capacity_bytes: 16777216
+    page_size_bytes: 256
+    sector_erase_bytes: 4096
+    block_erase_bytes: [32768, 65536]
+    verification: pending_on_physical_board
+  hyperram:
+    present: true
+notes:
+  - Confirm board revision and exact fitted NOR ordering code before programming.
+  - Board support must own pinmux, clocks, FlexSPI LUT, boot straps and memory map.

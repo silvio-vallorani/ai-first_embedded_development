@@ -1,0 +1,17 @@
+targets:
+  - name: mimxrt1180_evk_m33
+    board: mimxrt1180_evk
+    core: m33
+    configuration: release
+  - name: mimxrt1180_evk_m7
+    board: mimxrt1180_evk
+    core: m7
+    configuration: release
+  - name: custom_rt1189_m33
+    board: custom_rt1189
+    core: m33
+    configuration: release
+  - name: custom_rt1189_m7
+    board: custom_rt1189
+    core: m7
+    configuration: release

@@ -1,0 +1,15 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  host-sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure with sanitizers
+        run: cmake -S . -B build/sanitizers -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+      - name: Build and test
+        run: cmake --build build/sanitizers && ctest --test-dir build/sanitizers --output-on-failure

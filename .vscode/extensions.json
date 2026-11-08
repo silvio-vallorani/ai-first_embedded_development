@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "ms-vscode.cpptools",
+    "ms-vscode.cmake-tools",
+    "twxs.cmake",
+    "llvm-vs-code-extensions.vscode-clangd",
+    "ms-python.python",
+    "yzhang.markdown-all-in-one"
+  ]
+}

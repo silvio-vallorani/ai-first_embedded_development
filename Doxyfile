@@ -1,0 +1,10 @@
+PROJECT_NAME           = "AI-First Embedded Development"
+OUTPUT_DIRECTORY       = build/doxygen
+INPUT                  = firmware platform boards services applications
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.c *.hpp *.cpp
+EXTRACT_ALL            = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+WARN_IF_UNDOCUMENTED   = YES
+QUIET                  = YES
