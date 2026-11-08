@@ -34,22 +34,28 @@ typedef struct {
 
 typedef bool (*aied_signature_verify_fn)(const aied_release_manifest_t *manifest, void *context);
 
+/** @brief Target-side acceptance policy for a release manifest. */
+typedef struct {
+    uint32_t expected_hardware;        /**< Hardware compatibility identifier of the target. */
+    uint32_t bootloader_version;       /**< Version of the running bootloader. */
+    uint32_t minimum_security_version; /**< Anti-rollback floor read from the hardware counter. */
+    size_t cm33_capacity;              /**< Maximum CM33 image area in bytes. */
+    size_t cm7_capacity;               /**< Maximum CM7 image area in bytes. */
+} aied_manifest_policy_t;
+
 /**
  * @brief Validate the structural and policy fields of a paired release manifest.
+ * @note The anti-rollback floor must come from a hardware-backed monotonic counter;
+ *       the manifest comparison alone is not rollback protection (ADR-0008).
  * @param manifest Manifest to validate.
- * @param expected_hardware Hardware compatibility identifier of the current target.
- * @param bootloader_version Current bootloader version.
- * @param cm33_capacity Maximum CM33 image area in bytes.
- * @param cm7_capacity Maximum CM7 image area in bytes.
+ * @param policy Target acceptance policy.
  * @param verify_signature Signature verification callback.
  * @param context Opaque callback context.
- * @return true when the manifest is structurally valid and its signature is accepted.
+ * @return true when the manifest is structurally valid, accepted by the policy and its
+ *         signature is accepted.
  */
 bool aied_manifest_validate(const aied_release_manifest_t *manifest,
-                            uint32_t expected_hardware,
-                            uint32_t bootloader_version,
-                            size_t cm33_capacity,
-                            size_t cm7_capacity,
+                            const aied_manifest_policy_t *policy,
                             aied_signature_verify_fn verify_signature,
                             void *context);
 
