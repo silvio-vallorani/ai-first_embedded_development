@@ -23,15 +23,16 @@ See [MCUXpresso SDK setup](../../docs/toolchains/MCUXPRESSO_SDK.md) for workspac
 
 The CI workflow builds both the unmodified NXP multicore baseline and this application using the same pinned SDK workspace and NXP SysBuild project metadata.
 
-For the application build, the workflow:
+For the application build, `scripts/build_rt1180.sh` (CI and Linux/macOS) or `scripts/build_rt1180.ps1` (Windows):
 
-1. Copies the NXP `multicore_examples/hello_world` project directory to a temporary `dual_core_led_toggle` sibling inside the SDK examples tree.
-2. Replaces only the primary and secondary `main.c` application sources with this repository's CM33 and CM7 sources.
+1. Copies the NXP `multicore_examples/hello_world` project directory to a generated `aied_dual_core_led_toggle` sibling inside the SDK examples tree, marked with `.aied-generated-overlay`.
+2. Replaces the primary and secondary `main.c` application sources with this repository's CM33 and CM7 sources.
 3. Copies the shared `app_events.h` into both project directories.
-4. Retains NXP's `CMakeLists.txt`, `sysbuild.cmake`, `prj.conf`, board-specific `app.h`, clock/pin setup, linker scripts, CM7 image packaging and generated startup sources.
-5. Builds the copied project with the same SysBuild configuration used for the upstream baseline.
+4. Renames the template image names to `led_toggle_primary_core` and `led_toggle_secondary_core`, consistently in the CMake, SysBuild and IDE metadata files.
+5. Retains NXP's board port (`multicore_examples/hello_world` board path), `prj.conf`, board-specific `app.h`, clock/pin setup, linker scripts, CM7 image packaging and generated startup sources.
+6. Builds the copied project with the same SysBuild configuration used for the upstream baseline, into `build/rt1180-led-toggle`.
 
-This keeps the SDK project scaffolding and board support intact while compiling the application sources maintained in this repository. The generated overlay exists only in the CI workspace and is not committed.
+The resulting images are `led_toggle_primary_core_cm33.elf` (CM33) and `led_toggle_secondary_core_cm7.elf` (CM7); CI fails if they are missing or if a template image name remains. This keeps the SDK project scaffolding and board support intact while compiling the application sources maintained in this repository. The generated overlay is not committed.
 
 ### CM7 image address and packaging
 

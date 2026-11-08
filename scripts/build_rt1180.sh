@@ -7,10 +7,12 @@ SDK_ROOT="${MCUXPRESSO_SDK:-${PROJECT_ROOT}/../mcuxpresso-sdk}"
 SDK_EXAMPLES="${SDK_ROOT}/mcuxsdk/examples/multicore_examples"
 TEMPLATE="${SDK_EXAMPLES}/hello_world"
 OVERLAY="${SDK_EXAMPLES}/aied_dual_core_led_toggle"
-BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/rt1180-dual-core-led-toggle}"
+BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/rt1180-led-toggle}"
 VENV_DIR="${PROJECT_ROOT}/.venv"
 WEST_BIN="${VENV_DIR}/bin/west"
 MARKER=".aied-generated-overlay"
+TEMPLATE_IMAGE_PREFIX="hello_world"
+APP_IMAGE_PREFIX="led_toggle"
 
 if [[ ! -x "${WEST_BIN}" ]]; then
     echo "Error: the project Python environment is missing. Run scripts/setup_sdk.sh first." >&2
@@ -56,6 +58,19 @@ cp "${PROJECT_ROOT}/examples/dual_core_led_toggle/common/app_events.h" "${OVERLA
 
 test -f "${OVERLAY}/primary/sysbuild.cmake"
 test -f "${OVERLAY}/secondary/CMakeLists.txt"
+
+# Rename the template's image and IDE workspace names so build outputs carry this
+# application's name. Board-port paths (multicore_examples/hello_world) are NXP-owned
+# and stay unchanged.
+TEMPLATE_NAMES="${TEMPLATE_IMAGE_PREFIX}_(primary|secondary)_core|shared-workspace: ${TEMPLATE_IMAGE_PREFIX}\$"
+grep -rlE "${TEMPLATE_NAMES}" "${OVERLAY}" |
+    xargs perl -pi -e "s/\b${TEMPLATE_IMAGE_PREFIX}_(primary|secondary)_core/${APP_IMAGE_PREFIX}_\$1_core/g;
+                       s/(shared-workspace: )${TEMPLATE_IMAGE_PREFIX}\$/\${1}${APP_IMAGE_PREFIX}/"
+if grep -rqE "${TEMPLATE_NAMES}" "${OVERLAY}" ||
+    ! grep -q "APPLICATION ${APP_IMAGE_PREFIX}_secondary_core" "${OVERLAY}/primary/sysbuild.cmake"; then
+    echo "Error: the NXP template image names could not be renamed." >&2
+    exit 1
+fi
 
 (
     cd "${SDK_ROOT}"

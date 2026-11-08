@@ -88,6 +88,17 @@ jobs:
       - name: Build project CM33 + CM7 LED-toggle SysBuild application
         run: bash scripts/build_rt1180.sh
 
+      - name: Verify project image names
+        run: |
+          out=build/rt1180-led-toggle
+          test -f "${out}/primary/led_toggle_primary_core_cm33.elf"
+          test -f "${out}/led_toggle_secondary_core/led_toggle_secondary_core_cm7.elf"
+          test -f "${out}/led_toggle_secondary_core/armgcc/core1_image.bin"
+          if find "${out}" -name 'hello_world_*' | grep -q .; then
+            echo "::error::Template image names remain in the project build output."
+            exit 1
+          fi
+
       - name: Upload generated firmware artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,9 +109,9 @@ jobs:
             build/rt1180-baseline/**/*.bin
             build/rt1180-baseline/**/*.hex
             build/rt1180-baseline/**/*.map
-            build/rt1180-dual-core-led-toggle/**/*.elf
-            build/rt1180-dual-core-led-toggle/**/*.bin
-            build/rt1180-dual-core-led-toggle/**/*.hex
-            build/rt1180-dual-core-led-toggle/**/*.map
+            build/rt1180-led-toggle/**/*.elf
+            build/rt1180-led-toggle/**/*.bin
+            build/rt1180-led-toggle/**/*.hex
+            build/rt1180-led-toggle/**/*.map
           if-no-files-found: warn
           retention-days: 14
