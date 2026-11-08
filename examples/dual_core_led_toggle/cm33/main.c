@@ -49,7 +49,7 @@ int main(void)
 
     if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent,
                             app_remote_event_handler,
-                            NULL) != kStatus_Success)
+                            NULL) != kStatus_MCMGR_Success)
     {
         for (;;)
         {
@@ -78,7 +78,7 @@ int main(void)
     if (MCMGR_StartCore(APP_SECONDARY_CORE,
                         (void *)(char *)CORE1_BOOT_ADDRESS,
                         2U,
-                        kMCMGR_Start_Synchronous) != kStatus_Success)
+                        kMCMGR_Start_Synchronous) != kStatus_MCMGR_Success)
     {
         for (;;)
         {
@@ -101,7 +101,7 @@ int main(void)
 
         if (MCMGR_TriggerEvent(kMCMGR_Core1,
                                kMCMGR_RemoteApplicationEvent,
-                               APP_EVENT_TOGGLE_LED) != kStatus_Success)
+                               APP_EVENT_TOGGLE_LED) != kStatus_MCMGR_Success)
         {
             for (;;)
             {
