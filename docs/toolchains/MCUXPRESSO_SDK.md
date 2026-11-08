@@ -119,12 +119,10 @@ finally {
 
 ## Build the upstream dual-core reference example
 
-From the MCUXpresso SDK workspace root, use the West executable in the project environment:
-
-Linux/macOS:
+From the MCUXpresso SDK workspace root, use the West executable in the project environment. If the project root is stored in `PROJECT_ROOT`:
 
 ```sh
-../ai-first_embedded_development/.venv/bin/west build -b evkmimxrt1180 --sysbuild \
+"$PROJECT_ROOT/.venv/bin/west" build -b evkmimxrt1180 --sysbuild \
   mcuxsdk/examples/multicore_examples/hello_world/primary \
   --config flexspi_nor_debug --toolchain armgcc \
   -Dcore_id=cm33 -p always
