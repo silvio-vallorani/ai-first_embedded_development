@@ -6,14 +6,48 @@ on:
 
 jobs:
   host-tests:
+    name: Host tests (${{ matrix.compiler }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    env:
+      CC: ${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v4
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build gcc
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build ${{ matrix.compiler }}
       - name: Configure
         run: cmake --preset host-debug
       - name: Build
         run: cmake --build --preset host-debug
       - name: Unit tests
         run: ctest --preset host-debug
+
+  coverage:
+    name: Host test coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y cmake ninja-build gcc
+          pipx install gcovr==8.3
+      - name: Build and test with coverage
+        run: |
+          cmake -S . -B build/coverage -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="--coverage"
+          cmake --build build/coverage
+          ctest --test-dir build/coverage --output-on-failure
+      - name: Coverage report
+        run: |
+          gcovr --root . --filter firmware/ build/coverage \
+            --txt --cobertura build/coverage/coverage.xml \
+            --html-details build/coverage/coverage.html
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-coverage
+          path: |
+            build/coverage/coverage.xml
+            build/coverage/coverage*.html
