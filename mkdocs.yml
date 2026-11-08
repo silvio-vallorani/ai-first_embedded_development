@@ -11,6 +11,9 @@ nav:
       - Boot flow: architecture/BOOT_FLOW.md
       - Firmware update: architecture/FIRMWARE_UPDATE.md
       - Decisions: architecture/decisions/README.md
+      - Wiki publishing: architecture/WIKI_PUBLISHING.md
   - Engineering:
       - Unit testing: engineering/UNIT_TESTING.md
+  - Toolchains:
+      - MCUXpresso SDK: toolchains/MCUXPRESSO_SDK.md
   - API Reference: https://silvio-vallorani.github.io/ai-first_embedded_development/doxygen/
