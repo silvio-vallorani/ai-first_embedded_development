@@ -12,6 +12,11 @@
     "${workspaceFolder}/../mcuxpresso-sdk/mcuxsdk/**",
     "${env:MCUXPRESSO_SDK}/mcuxsdk/**"
   ],
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "[windows]": {
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+  },
   "cmake.configureOnOpen": true,
   "files.insertFinalNewline": true,
   "editor.formatOnSave": true
