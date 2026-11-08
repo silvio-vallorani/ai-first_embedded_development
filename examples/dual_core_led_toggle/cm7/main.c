@@ -3,13 +3,12 @@
 
 #include "app_events.h"
 #include "board.h"
-#include "fsl_clock.h"
 #include "fsl_common.h"
-#include "fsl_gpio.h"
+#include "fsl_rgpio.h"
 #include "fsl_iomuxc.h"
 #include "mcmgr.h"
 
-#define APP_LED_GPIO GPIO4
+#define APP_LED_GPIO RGPIO4
 #define APP_LED_GPIO_PIN (27U)
 #define APP_LED_MASK (1UL << APP_LED_GPIO_PIN)
 
@@ -20,15 +19,13 @@ static volatile bool s_toggle_requested = false;
  */
 static void app_led_init(void)
 {
-    gpio_pin_config_t ledConfig = {
-        .direction = kGPIO_DigitalOutput,
+    rgpio_pin_config_t ledConfig = {
+        .pinDirection = kRGPIO_DigitalOutput,
         .outputLogic = 1U,
-        .interruptMode = kGPIO_NoIntmode,
     };
 
-    CLOCK_EnableClock(kCLOCK_Gpio4);
     IOMUXC_SetPinMux(IOMUXC_GPIO_AD_27_GPIO4_IO27, 0U);
-    GPIO_PinInit(APP_LED_GPIO, APP_LED_GPIO_PIN, &ledConfig);
+    RGPIO_PinInit(APP_LED_GPIO, APP_LED_GPIO_PIN, &ledConfig);
 }
 
 /**
@@ -85,7 +82,7 @@ int main(void)
         if (s_toggle_requested)
         {
             s_toggle_requested = false;
-            GPIO_PortToggle(APP_LED_GPIO, APP_LED_MASK);
+            RGPIO_PortToggle(APP_LED_GPIO, APP_LED_MASK);
         }
     }
 }
