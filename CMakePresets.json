@@ -8,14 +8,28 @@
       "binaryDir": "${sourceDir}/build/host-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "AIED_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "host-release",
+      "displayName": "Host unit tests (Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/host-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "AIED_BUILD_TESTS": "ON"
       }
     }
   ],
   "buildPresets": [
-    { "name": "host-debug", "configurePreset": "host-debug" }
+    { "name": "host-debug", "configurePreset": "host-debug" },
+    { "name": "host-release", "configurePreset": "host-release" }
   ],
   "testPresets": [
-    { "name": "host-debug", "configurePreset": "host-debug", "output": { "outputOnFailure": true } }
+    { "name": "host-debug", "configurePreset": "host-debug", "output": { "outputOnFailure": true } },
+    { "name": "host-release", "configurePreset": "host-release", "output": { "outputOnFailure": true } }
   ]
 }
