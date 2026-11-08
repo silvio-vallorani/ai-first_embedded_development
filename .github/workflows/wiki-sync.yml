@@ -1,0 +1,68 @@
+name: Synchronize GitHub Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**/*.md"
+      - "README.md"
+      - "examples/**/README.md"
+      - "scripts/publish_wiki.py"
+      - ".github/workflows/wiki-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate Wiki pages
+        run: python scripts/publish_wiki.py
+
+      - name: Publish generated pages
+        env:
+          WIKI_PUBLISH_TOKEN: ${{ secrets.WIKI_PUBLISH_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${WIKI_PUBLISH_TOKEN}" ]; then
+            echo "::error::Missing WIKI_PUBLISH_TOKEN repository secret."
+            echo "Add a token with write access to the repository Wiki as WIKI_PUBLISH_TOKEN."
+            exit 1
+          fi
+
+          AUTH_HEADER="$(printf 'x-access-token:%s' "${WIKI_PUBLISH_TOKEN}" | base64 -w0)"
+
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${AUTH_HEADER}" \
+            clone "https://github.com/${GITHUB_REPOSITORY}.wiki.git" build/wiki-repository
+
+          rsync -a --delete --exclude=".git" build/wiki/ build/wiki-repository/
+
+          cd build/wiki-repository
+          git config user.name "Silvio Vallorani"
+          git config user.email "silvio.vallorani.dev@gmail.com"
+          git add --all
+
+          if git diff --cached --quiet; then
+            echo "Wiki is already up to date."
+            exit 0
+          fi
+
+          git commit -m "docs: synchronize Wiki from main repository"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${AUTH_HEADER}" push origin HEAD
