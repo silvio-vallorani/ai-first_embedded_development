@@ -2,7 +2,11 @@
 
 ## Initial implementation
 
-The first host test target uses CMake + CTest and a small assertion runner. Boot logic depends on callback interfaces rather than direct flash, UART, crypto or RTOS calls. `tests/mocks/mock_swap_backend.*` provides deterministic fake operations and fault injection points for the slot-swap orchestrator.
+The first host test target uses CMake + CTest and a small assertion runner. Boot logic depends on callback interfaces rather than direct flash, UART, crypto or RTOS calls. `tests/mocks/mock_swap_backend.*` provides a fake with per-sector slot state, a verification that rejects mixed pairs, corrupt-image flags and power-cut injection at any numbered side-effecting operation (journal write, sector swap, commit).
+
+The slot-swap tests cut power at every operation of the forward swap, the revert and the confirmation, reboot, and assert that the result is always a whole pair: committed or trialled new pair, or reverted previous pair, never a mixed one.
+
+CI builds and runs the host tests with GCC and Clang, with ASan/UBSan, and with gcov instrumentation. The `host-coverage` artifact contains the gcovr report. No coverage threshold is enforced yet.
 
 Run:
 

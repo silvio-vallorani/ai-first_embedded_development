@@ -12,5 +12,7 @@ Treat the two images as one release pair. Validate both before activation; commi
 ## Consequences
 Manifest, journal and boot state are pair-level. Neither core may run while a pair transition is incomplete.
 
+The pair transaction is the journal state machine described in `FIRMWARE_UPDATE.md`: `PREPARED → SWAPPING → TRIAL → COMMITTING → COMMITTED`, with `REVERTING → REVERTED` when verification fails or the probation budget is exhausted. Once `COMMITTING` is persisted the commit is completed, never reverted, because the commit may already have advanced the anti-rollback counter. Sector swaps must be idempotent per direction so that resume after power loss never undoes a completed sector.
+
 ## Validation
 Inject power loss at every swap/journal transition and verify recovery on hardware.

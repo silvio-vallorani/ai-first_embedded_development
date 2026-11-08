@@ -9,7 +9,7 @@
 5. The boot manager validates the release manifest, both image hashes/signatures, hardware compatibility, bootloader compatibility and pair identity.
 6. Slot swap is completed or resumed using the journal and scratch sector. The active pair is always mapped to fixed logical execution addresses.
 7. CM33 performs its self-test and starts CM7 only after the pair-level activation state is valid.
-8. Both cores run probationary health checks. A confirmed pair is committed; otherwise the pair is rolled back as one unit.
+8. Both cores run probationary health checks. A confirmed pair is committed; otherwise, when the trial budget of unconfirmed boots is exhausted, the pair is rolled back as one unit. See the journal state machine in `FIRMWARE_UPDATE.md`.
 
 ## Invariants
 
