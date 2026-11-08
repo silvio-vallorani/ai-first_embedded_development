@@ -21,8 +21,6 @@
     {
       "label": "Build RT1180 dual-core firmware",
       "type": "shell",
-      "dependsOn": "Setup MCUXpresso SDK",
-      "dependsOrder": "sequence",
       "windows": {
         "command": "powershell.exe",
         "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\build_rt1180.ps1"]
