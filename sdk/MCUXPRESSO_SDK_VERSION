@@ -1,0 +1,6 @@
+MCUXpresso SDK 26.09.00
+Manifest repository: https://github.com/nxp-mcuxpresso/mcuxsdk-manifests
+Manifest tag: v26.09.00
+Board: evkmimxrt1180
+MCU: MIMXRT1189
+Arm GNU Toolchain: 14.2.x

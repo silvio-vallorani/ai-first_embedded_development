@@ -6,6 +6,8 @@ A multi-board, dual-core embedded firmware template for NXP i.MX RT1189-class de
 
 - MCU: NXP MIMXRT1189 (Cortex-M33 + Cortex-M7).
 - Reference board: MIMXRT1180-EVK.
+- MCUXpresso SDK: **26.09.00** (pinned release; see [SDK setup](docs/toolchains/MCUXPRESSO_SDK.md)).
+- Arm GNU Toolchain: **14.2.x**, as validated by NXP for this SDK release.
 - External boot/update storage: 128-Mbit (16-MiB) Winbond W25Q128JW-family QSPI NOR reference device; exact ordering code and board revision must be confirmed against the populated board BOM.
 - C11 platform and boot code; C++17 available to application/services; CMake + Ninja; host unit tests with CTest.
 - OS-independent services through OSAL; bare-metal backend is the initial baseline.
@@ -14,7 +16,7 @@ A multi-board, dual-core embedded firmware template for NXP i.MX RT1189-class de
 
 ## Repository status
 
-This is an initial architectural and host-testable software scaffold. It is not a production bootloader, signed-image implementation, flash driver, or validated RT1189 board port. Hardware-dependent operations are deliberately behind interfaces.
+This is an initial architectural and host-testable software scaffold plus a first dual-core application source example. It is not a production bootloader, signed-image implementation, flash driver, or validated RT1189 board port. Hardware-dependent operations are deliberately behind interfaces. The dual-core LED example still requires integration into the SDK-generated SysBuild project and target build validation.
 
 ## Build and test on host
 
@@ -23,6 +25,10 @@ cmake --preset host-debug
 cmake --build --preset host-debug
 ctest --preset host-debug
 ```
+
+## Embedded SDK setup
+
+The SDK is a separately managed dependency, pinned to NXP release tag `v26.09.00`. Follow [MCUXpresso SDK setup](docs/toolchains/MCUXPRESSO_SDK.md) before building embedded examples.
 
 See [Architecture](docs/architecture/ARCHITECTURE.md), [Memory map](docs/architecture/MEMORY_MAP.md), [Boot flow](docs/architecture/BOOT_FLOW.md), [Firmware update](docs/architecture/FIRMWARE_UPDATE.md), and [Unit testing](docs/engineering/UNIT_TESTING.md).
 
