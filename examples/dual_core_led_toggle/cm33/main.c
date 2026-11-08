@@ -1,20 +1,18 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "app_events.h"
+#include "app.h"
+#include "board.h"
 #include "fsl_common.h"
 #include "mcmgr.h"
 
-/*
- * The CM7 image address is a board/linker integration parameter.
- * Define APP_CM7_BOOT_ADDRESS from the CM7 image load/entry address generated
- * by the selected MCUXpresso SDK MIMXRT1180-EVK configuration.
- */
-#ifndef APP_CM7_BOOT_ADDRESS
-#error "APP_CM7_BOOT_ADDRESS must be defined by the CM7 image build configuration"
-#endif
-
 #define APP_CM7_READY_TIMEOUT_ITERATIONS (10000000UL)
+
+#if !defined(APP_SECONDARY_CORE)
+#define APP_SECONDARY_CORE kMCMGR_Core1
+#endif
 
 static volatile bool s_cm7_ready = false;
 
@@ -46,8 +44,8 @@ int main(void)
 {
     uint32_t iteration = 0U;
 
-    MCMGR_EarlyInit();
-    MCMGR_Init();
+    (void)MCMGR_Init();
+    BOARD_InitHardware();
 
     if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent,
                             app_remote_event_handler,
@@ -58,13 +56,28 @@ int main(void)
         }
     }
 
+#ifdef CORE1_IMAGE_COPY_TO_RAM
     /*
-     * The CM7 image is linked into the primary multicore image by the SDK
-     * project. The address is supplied by that project's linker integration.
+     * Copy the secondary image using the linker symbols and memory address
+     * provided by the NXP board-specific multicore project configuration.
      */
-    if (MCMGR_StartCore(kMCMGR_Core1,
-                        (uint32_t)APP_CM7_BOOT_ADDRESS,
-                        0U,
+    {
+        uint32_t core1_image_size = get_core1_image_size();
+
+        (void)memcpy((void *)(char *)CORE1_BOOT_ADDRESS,
+                     (const void *)CORE1_IMAGE_START,
+                     core1_image_size);
+
+#ifdef APP_INVALIDATE_CACHE_FOR_SECONDARY_CORE_IMAGE_MEMORY
+        invalidate_cache_for_core1_image_memory((uint32_t)CORE1_BOOT_ADDRESS,
+                                                core1_image_size);
+#endif
+    }
+#endif
+
+    if (MCMGR_StartCore(APP_SECONDARY_CORE,
+                        (void *)(char *)CORE1_BOOT_ADDRESS,
+                        2U,
                         kMCMGR_Start_Synchronous) != kStatus_Success)
     {
         for (;;)

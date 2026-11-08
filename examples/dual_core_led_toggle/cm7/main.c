@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "app_events.h"
+#include "board.h"
 #include "fsl_clock.h"
 #include "fsl_common.h"
 #include "fsl_gpio.h"
@@ -56,10 +57,10 @@ static void app_remote_event_handler(mcmgr_core_t coreNum,
  */
 int main(void)
 {
+    BOARD_InitHardware();
     app_led_init();
 
-    MCMGR_EarlyInit();
-    MCMGR_Init();
+    (void)MCMGR_Init();
 
     if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent,
                             app_remote_event_handler,

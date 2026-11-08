@@ -14,8 +14,6 @@
 
 The SDK is an external dependency. Do not copy the entire SDK into this repository or follow its moving `main` branch for a reproducible build.
 
-NXP's release page identifies 26.09.00 as the latest non-preview quarterly release at the time this baseline was selected. NXP also offers 26.06.00-LTS for projects prioritizing the two-year maintenance window. The 26.12.00-pvw1 preview is intentionally not selected.
-
 ## Prerequisites
 
 Install the versions documented by NXP for SDK 26.09.00:
@@ -60,21 +58,19 @@ west build -b evkmimxrt1180 --sysbuild \
   -Dcore_id=cm33 -p always
 ```
 
-This is the upstream NXP reference build, not yet the custom LED-toggle application. It is the first baseline to build successfully before changing application sources. SysBuild is required so the secondary-core image is built and packaged with the primary image.
+The repository's CI workflow first builds this unmodified NXP reference example. It then creates a temporary copy of the NXP `hello_world` SysBuild project, replaces only the two application `main.c` files with the sources from `examples/dual_core_led_toggle`, and builds the resulting CM33 + CM7 LED-toggle firmware. NXP board support, linker scripts, startup, image-copy and packaging configuration remain sourced from the pinned SDK.
 
-For the SDK's MCMGR-specific demonstration, inspect:
+## Build validation
 
-```text
-examples/multicore_examples/multicore_manager/
-```
+The GitHub Actions workflow `RT1189 embedded build` validates two distinct outputs:
+
+1. The unmodified NXP CM33 + CM7 multicore baseline.
+2. This repository's CM33 + CM7 dual-core LED-toggle application, built through the NXP SysBuild project template.
+
+The workflow uploads generated ELF, BIN, HEX and MAP files as a build artifact. A successful CI build confirms compilation and image packaging; it does not replace a physical EVK test of the LED, inter-core timing or boot behaviour.
 
 NXP documentation:
 - SDK 26.09.00 release: https://github.com/nxp-mcuxpresso/mcuxsdk-manifests/releases/tag/v26.09.00
 - MIMXRT1180-EVK board page: https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/boards/RT/evkmimxrt1180/index.html
-- Multicore SDK release notes: https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/middleware/multicore/mcsdk-release-notes.html
 - Repository setup: https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/gsd/repo_setup.html
 - SysBuild: https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/develop/build_system/Sysbuild.html
-
-## Validation status
-
-The version selection and build procedure are documented, but the SDK has not been downloaded or built in this execution environment. The upstream reference build and then the modified CM33/CM7 application must be compiled before claiming target-build success. Physical LED behaviour still requires an EVK test.

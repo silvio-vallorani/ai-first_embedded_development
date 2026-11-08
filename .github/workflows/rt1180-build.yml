@@ -79,15 +79,50 @@ jobs:
             -Dcore_id=cm33 -p always \
             -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
 
+      - name: Prepare project LED-toggle application over the NXP SysBuild template
+        working-directory: mcuxpresso-sdk
+        run: |
+          SDK_EXAMPLES="mcuxsdk/examples/multicore_examples"
+          PROJECT_EXAMPLE="${SDK_EXAMPLES}/dual_core_led_toggle"
+
+          rm -rf "${PROJECT_EXAMPLE}"
+          cp -a "${SDK_EXAMPLES}/hello_world" "${PROJECT_EXAMPLE}"
+
+          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/cm33/main.c" \
+            "${PROJECT_EXAMPLE}/primary/main.c"
+          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/cm7/main.c" \
+            "${PROJECT_EXAMPLE}/secondary/main.c"
+          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/common/app_events.h" \
+            "${PROJECT_EXAMPLE}/primary/app_events.h"
+          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/common/app_events.h" \
+            "${PROJECT_EXAMPLE}/secondary/app_events.h"
+
+          test -f "${PROJECT_EXAMPLE}/primary/sysbuild.cmake"
+          test -f "${PROJECT_EXAMPLE}/secondary/CMakeLists.txt"
+
+      - name: Build project CM33 + CM7 LED-toggle SysBuild application
+        working-directory: mcuxpresso-sdk
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          west build -b "${BOARD}" --sysbuild \
+            mcuxsdk/examples/multicore_examples/dual_core_led_toggle/primary \
+            --config flexspi_nor_debug --toolchain armgcc \
+            -Dcore_id=cm33 -p always \
+            -d "${GITHUB_WORKSPACE}/build/rt1180-dual-core-led-toggle"
+
       - name: Upload generated firmware artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: rt1180-sdk-26.09.00-baseline
+          name: rt1180-sdk-26.09.00-firmware
           path: |
             build/rt1180-baseline/**/*.elf
             build/rt1180-baseline/**/*.bin
             build/rt1180-baseline/**/*.hex
             build/rt1180-baseline/**/*.map
+            build/rt1180-dual-core-led-toggle/**/*.elf
+            build/rt1180-dual-core-led-toggle/**/*.bin
+            build/rt1180-dual-core-led-toggle/**/*.hex
+            build/rt1180-dual-core-led-toggle/**/*.map
           if-no-files-found: warn
           retention-days: 14
