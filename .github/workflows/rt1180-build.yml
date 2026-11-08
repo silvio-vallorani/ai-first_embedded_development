@@ -1,0 +1,87 @@
+name: RT1189 embedded build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rt1180-build.yml'
+      - 'sdk/**'
+      - 'examples/dual_core_led_toggle/**'
+      - 'docs/toolchains/MCUXPRESSO_SDK.md'
+  pull_request:
+    paths:
+      - '.github/workflows/rt1180-build.yml'
+      - 'sdk/**'
+      - 'examples/dual_core_led_toggle/**'
+      - 'docs/toolchains/MCUXPRESSO_SDK.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upstream-dual-core-baseline:
+    name: Build NXP RT1180-EVK multicore baseline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SDK_TAG: v26.09.00
+      BOARD: evkmimxrt1180
+      ARMGCC_DIR: ${{ github.workspace }}/toolchains/arm-gnu-toolchain-14.2.rel1
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes git python3-pip python3-venv cmake ninja-build xz-utils
+          python3 -m pip install --user --break-system-packages west
+
+      - name: Install Arm GNU Toolchain 14.2.x
+        run: |
+          mkdir -p "${ARMGCC_DIR}"
+          curl --fail --location --retry 3 \
+            https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz \
+            --output /tmp/arm-gnu-toolchain.tar.xz
+          tar -xJf /tmp/arm-gnu-toolchain.tar.xz --strip-components=1 -C "${ARMGCC_DIR}"
+          echo "${ARMGCC_DIR}/bin" >> "${GITHUB_PATH}"
+          "${ARMGCC_DIR}/bin/arm-none-eabi-gcc" --version
+
+      - name: Initialize pinned MCUXpresso SDK manifest
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
+            mcuxpresso-sdk --mr "${SDK_TAG}"
+          cd mcuxpresso-sdk
+          west manifest --resolve
+
+      - name: Fetch repositories required by the EVK
+        working-directory: mcuxpresso-sdk
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          west update_board --set board "${BOARD}"
+          west list
+
+      - name: Build upstream CM33 + CM7 SysBuild example
+        working-directory: mcuxpresso-sdk
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          west build -b "${BOARD}" --sysbuild \
+            examples/multicore_examples/hello_world/primary \
+            --config flexspi_nor_debug --toolchain armgcc \
+            -Dcore_id=cm33 -p always \
+            -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
+
+      - name: Upload generated firmware artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rt1180-sdk-26.09.00-baseline
+          path: |
+            build/rt1180-baseline/**/*.elf
+            build/rt1180-baseline/**/*.bin
+            build/rt1180-baseline/**/*.hex
+            build/rt1180-baseline/**/*.map
+          if-no-files-found: warn
+          retention-days: 14
