@@ -8,9 +8,17 @@ SDK_EXAMPLES="${SDK_ROOT}/mcuxsdk/examples/multicore_examples"
 TEMPLATE="${SDK_EXAMPLES}/hello_world"
 OVERLAY="${SDK_EXAMPLES}/aied_dual_core_led_toggle"
 BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/rt1180-dual-core-led-toggle}"
+VENV_DIR="${PROJECT_ROOT}/.venv"
+WEST_BIN="${VENV_DIR}/bin/west"
 MARKER=".aied-generated-overlay"
 
-for tool in west cmake ninja; do
+if [[ ! -x "${WEST_BIN}" ]]; then
+    echo "Error: the project Python environment is missing. Run scripts/setup_sdk.sh first." >&2
+    exit 1
+fi
+export PATH="${VENV_DIR}/bin:${PATH}"
+
+for tool in cmake ninja; do
     if ! command -v "${tool}" >/dev/null 2>&1; then
         echo "Error: ${tool} is required and must be on PATH." >&2
         exit 1
@@ -51,7 +59,7 @@ test -f "${OVERLAY}/secondary/CMakeLists.txt"
 
 (
     cd "${SDK_ROOT}"
-    west build -b evkmimxrt1180 --sysbuild \
+    "${WEST_BIN}" build -b evkmimxrt1180 --sysbuild \
         "${OVERLAY}/primary" \
         --config flexspi_nor_debug --toolchain armgcc \
         -Dcore_id=cm33 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always \
