@@ -6,13 +6,10 @@
 #include <stdint.h>
 
 #define AIED_RELEASE_ID_SIZE 16U
-#define AIED_SHA256_SIZE 32U
-#define AIED_MANIFEST_MAGIC 0x41494544UL
+#define AIED_SHA256_SIZE     32U
+#define AIED_MANIFEST_MAGIC  0x41494544UL
 
-typedef enum {
-    AIED_CORE_CM33 = 0,
-    AIED_CORE_CM7 = 1
-} aied_core_t;
+typedef enum { AIED_CORE_CM33 = 0, AIED_CORE_CM7 = 1 } aied_core_t;
 
 typedef struct {
     uint32_t image_size;
@@ -54,9 +51,7 @@ typedef struct {
  * @return true when the manifest is structurally valid, accepted by the policy and its
  *         signature is accepted.
  */
-bool aied_manifest_validate(const aied_release_manifest_t *manifest,
-                            const aied_manifest_policy_t *policy,
-                            aied_signature_verify_fn verify_signature,
-                            void *context);
+bool aied_manifest_validate(const aied_release_manifest_t *manifest, const aied_manifest_policy_t *policy,
+                            aied_signature_verify_fn verify_signature, void *context);
 
 #endif

@@ -36,8 +36,7 @@ static bool mock_store(void *context, const aied_swap_journal_t *journal)
     return true;
 }
 
-static bool mock_swap(void *context, uint32_t core_id, uint32_t sector_index,
-                      aied_swap_direction_t direction)
+static bool mock_swap(void *context, uint32_t core_id, uint32_t sector_index, aied_swap_direction_t direction)
 {
     mock_swap_backend_t *mock = context;
     if ((core_id > 1U) || (sector_index >= mock->sectors[core_id]) || !mock_power_ok(mock)) {
@@ -99,13 +98,11 @@ bool mock_swap_backend_all_sectors(const mock_swap_backend_t *mock, bool swapped
 
 aied_swap_backend_t mock_swap_backend_interface(mock_swap_backend_t *mock)
 {
-    const aied_swap_backend_t backend = {
-        .load_journal = mock_load,
-        .store_journal = mock_store,
-        .swap_sector = mock_swap,
-        .verify_pair = mock_verify,
-        .commit_pair = mock_commit,
-        .context = mock
-    };
+    const aied_swap_backend_t backend = {.load_journal = mock_load,
+                                         .store_journal = mock_store,
+                                         .swap_sector = mock_swap,
+                                         .verify_pair = mock_verify,
+                                         .commit_pair = mock_commit,
+                                         .context = mock};
     return backend;
 }

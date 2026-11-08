@@ -111,7 +111,10 @@ if grep -rqE "${TEMPLATE_NAMES}" "${OVERLAY}" ||
     exit 1
 fi
 
-# Variant and build-time application parameters (CM33 primary image only).
+# Logging service (both variants) and variant/build-time parameters (CM33 primary image only).
+printf '\nset(AIED_ROOT "%s")\n' "${PROJECT_ROOT}" >> "${OVERLAY}/primary/CMakeLists.txt"
+cat "${EXAMPLE_DIR}/log/primary.cmake" >> "${OVERLAY}/primary/CMakeLists.txt"
+cat "${EXAMPLE_DIR}/log/primary.conf" >> "${OVERLAY}/primary/prj.conf"
 if [[ "${VARIANT}" == "mcuboot" ]]; then
     cat "${EXAMPLE_DIR}/mcuboot/primary.cmake" >> "${OVERLAY}/primary/CMakeLists.txt"
     cat "${EXAMPLE_DIR}/mcuboot/primary.conf" >> "${OVERLAY}/primary/prj.conf"

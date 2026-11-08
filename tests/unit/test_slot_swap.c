@@ -2,7 +2,7 @@
 #include "mock_swap_backend.h"
 
 #define CM33_SECTORS 2U
-#define CM7_SECTORS 3U
+#define CM7_SECTORS  3U
 
 static mock_swap_backend_t mock;
 static aied_swap_backend_t backend;

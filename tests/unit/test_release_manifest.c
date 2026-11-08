@@ -17,13 +17,11 @@ static bool signature_reject(const aied_release_manifest_t *manifest, void *cont
     return false;
 }
 
-static const aied_manifest_policy_t base_policy = {
-    .expected_hardware = 0x11890001U,
-    .bootloader_version = 2U,
-    .minimum_security_version = 3U,
-    .cm33_capacity = 1024U,
-    .cm7_capacity = 2048U
-};
+static const aied_manifest_policy_t base_policy = {.expected_hardware = 0x11890001U,
+                                                   .bootloader_version = 2U,
+                                                   .minimum_security_version = 3U,
+                                                   .cm33_capacity = 1024U,
+                                                   .cm7_capacity = 2048U};
 
 static aied_release_manifest_t valid_manifest(void)
 {
