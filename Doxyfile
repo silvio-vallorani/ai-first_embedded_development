@@ -1,6 +1,6 @@
 PROJECT_NAME           = "AI-First Embedded Development"
 OUTPUT_DIRECTORY       = build/doxygen
-INPUT                  = firmware platform boards services applications
+INPUT                  = boards firmware platform examples tests
 RECURSIVE              = YES
 FILE_PATTERNS          = *.h *.c *.hpp *.cpp
 EXTRACT_ALL            = YES
