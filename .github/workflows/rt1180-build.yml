@@ -65,9 +65,12 @@ jobs:
       - name: Create Python environment and initialize pinned MCUXpresso SDK
         run: bash scripts/setup_sdk.sh
 
-      - name: Verify upstream multicore example source
+      - name: Verify Python environment and upstream multicore example source
         working-directory: mcuxpresso-sdk
         run: |
+          echo "${GITHUB_WORKSPACE}/.venv/bin" >> "${GITHUB_PATH}"
+          export PATH="${GITHUB_WORKSPACE}/.venv/bin:${PATH}"
+          python3 -c "import sys, yaml; print('Python:', sys.executable); print('PyYAML:', yaml.__version__)"
           test -f mcuxsdk/examples/multicore_examples/hello_world/primary/CMakeLists.txt
           test -f mcuxsdk/examples/multicore_examples/hello_world/secondary/CMakeLists.txt
 
@@ -78,7 +81,8 @@ jobs:
             mcuxsdk/examples/multicore_examples/hello_world/primary \
             --config flexspi_nor_debug --toolchain armgcc \
             -Dcore_id=cm33 \
-            -DPython3_EXECUTABLE="${GITHUB_WORKSPACE}/.venv/bin/python" -p always \
+            -DPython3_EXECUTABLE="${GITHUB_WORKSPACE}/.venv/bin/python" \\
+            -DPython_EXECUTABLE="${GITHUB_WORKSPACE}/.venv/bin/python" -p always \
             -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
 
       - name: Build project CM33 + CM7 LED-toggle SysBuild application
