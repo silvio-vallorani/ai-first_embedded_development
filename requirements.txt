@@ -1,2 +1,3 @@
 # Python tooling required by the pinned MCUXpresso SDK workflow.
 west==1.4.0
+PyYAML==6.0.2
