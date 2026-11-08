@@ -72,7 +72,7 @@ fi
 
 echo
 echo "Python environment ready: ${VENV_DIR}"
-echo "West version: $(" ${WEST_BIN}" --version)"
+echo "West version: $("${WEST_BIN}" --version)"
 echo "MCUXpresso SDK workspace ready: ${SDK_ROOT}"
 echo "Set MCUXPRESSO_SDK to this directory if you use a different location."
 echo "Install Arm GNU Toolchain 14.2.x and set ARMGCC_DIR to its installation root."
