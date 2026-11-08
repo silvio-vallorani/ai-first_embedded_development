@@ -39,6 +39,7 @@ jobs:
 
       - name: Generate API documentation
         run: |
+          mkdir -p build/doxygen
           doxygen --version
           doxygen Doxyfile
           test -f build/doxygen/html/index.html
