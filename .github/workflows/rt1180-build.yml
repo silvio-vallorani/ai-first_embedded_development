@@ -81,7 +81,7 @@ jobs:
             mcuxsdk/examples/multicore_examples/hello_world/primary \
             --config flexspi_nor_debug --toolchain armgcc \
             -Dcore_id=cm33 \
-            -DPython3_EXECUTABLE="${GITHUB_WORKSPACE}/.venv/bin/python" \\
+            -DPython3_EXECUTABLE="${GITHUB_WORKSPACE}/.venv/bin/python" \
             -DPython_EXECUTABLE="${GITHUB_WORKSPACE}/.venv/bin/python" -p always \
             -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
 
