@@ -8,12 +8,20 @@ on:
       - 'sdk/**'
       - 'examples/dual_core_led_toggle/**'
       - 'docs/toolchains/MCUXPRESSO_SDK.md'
+      - 'scripts/**'
+      - '.vscode/**'
+      - 'CMakePresets.json'
+      - 'README.md'
   pull_request:
     paths:
       - '.github/workflows/rt1180-build.yml'
       - 'sdk/**'
       - 'examples/dual_core_led_toggle/**'
       - 'docs/toolchains/MCUXPRESSO_SDK.md'
+      - 'scripts/**'
+      - '.vscode/**'
+      - 'CMakePresets.json'
+      - 'README.md'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +36,7 @@ jobs:
       SDK_TAG: v26.09.00
       BOARD: evkmimxrt1180
       ARMGCC_DIR: ${{ github.workspace }}/toolchains/arm-gnu-toolchain-14.2.rel1
+      MCUXPRESSO_SDK: ${{ github.workspace }}/mcuxpresso-sdk
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
@@ -79,36 +88,10 @@ jobs:
             -Dcore_id=cm33 -p always \
             -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
 
-      - name: Prepare project LED-toggle application over the NXP SysBuild template
-        working-directory: mcuxpresso-sdk
-        run: |
-          SDK_EXAMPLES="mcuxsdk/examples/multicore_examples"
-          PROJECT_EXAMPLE="${SDK_EXAMPLES}/dual_core_led_toggle"
-
-          rm -rf "${PROJECT_EXAMPLE}"
-          cp -a "${SDK_EXAMPLES}/hello_world" "${PROJECT_EXAMPLE}"
-
-          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/cm33/main.c" \
-            "${PROJECT_EXAMPLE}/primary/main.c"
-          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/cm7/main.c" \
-            "${PROJECT_EXAMPLE}/secondary/main.c"
-          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/common/app_events.h" \
-            "${PROJECT_EXAMPLE}/primary/app_events.h"
-          cp "${GITHUB_WORKSPACE}/examples/dual_core_led_toggle/common/app_events.h" \
-            "${PROJECT_EXAMPLE}/secondary/app_events.h"
-
-          test -f "${PROJECT_EXAMPLE}/primary/sysbuild.cmake"
-          test -f "${PROJECT_EXAMPLE}/secondary/CMakeLists.txt"
-
       - name: Build project CM33 + CM7 LED-toggle SysBuild application
-        working-directory: mcuxpresso-sdk
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          west build -b "${BOARD}" --sysbuild \
-            mcuxsdk/examples/multicore_examples/dual_core_led_toggle/primary \
-            --config flexspi_nor_debug --toolchain armgcc \
-            -Dcore_id=cm33 -p always \
-            -d "${GITHUB_WORKSPACE}/build/rt1180-dual-core-led-toggle"
+          bash scripts/build_rt1180.sh
 
       - name: Upload generated firmware artifacts
         if: always()
