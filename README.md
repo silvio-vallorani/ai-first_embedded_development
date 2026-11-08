@@ -16,9 +16,24 @@ A multi-board, dual-core embedded firmware template for NXP i.MX RT1189-class de
 
 ## Repository status
 
-This is an initial architectural and host-testable software scaffold plus a first dual-core application source example. It is not a production bootloader, signed-image implementation, flash driver, or validated RT1189 board port. Hardware-dependent operations are deliberately behind interfaces. The dual-core LED example still requires integration into the SDK-generated SysBuild project and target build validation.
+This is an initial architectural and host-testable software scaffold plus a first dual-core application source example. It is not a production bootloader, signed-image implementation, flash driver, or validated RT1189 board port. Hardware-dependent operations are deliberately behind interfaces. The dual-core LED example is built using the NXP-generated SysBuild project template.
+
+## Open in VS Code
+
+1. Clone this repository and open its root folder in VS Code.
+2. Install the recommended extensions when prompted.
+3. Install the host prerequisites: Git, Python 3.8+, CMake and Ninja.
+4. Install Arm GNU Toolchain 14.2.x and set `ARMGCC_DIR` to its installation directory. Add its `bin` directory to `PATH`.
+5. Run **Terminal → Run Task → Setup MCUXpresso SDK** once. The SDK is installed in the sibling directory `../mcuxpresso-sdk` by default.
+6. Run **Terminal → Run Task → Build RT1180 dual-core firmware** whenever you want to rebuild.
+
+The SDK can be placed elsewhere by setting `MCUXPRESSO_SDK` to the workspace directory containing `.west`. On Windows, use the PowerShell scripts; on Linux/macOS, use the Bash scripts. The setup script fetches only the repositories required by the selected EVK board. It does not install the Arm toolchain.
+
+The embedded build creates a guarded, generated overlay under the SDK workspace, based on NXP's `hello_world` multicore SysBuild template. The source files in this repository remain the authoritative application sources. The generated overlay is never allowed to overwrite an unmarked directory.
 
 ## Build and test on host
+
+Use the existing CMake presets for host-side code:
 
 ```sh
 cmake --preset host-debug
@@ -26,9 +41,13 @@ cmake --build --preset host-debug
 ctest --preset host-debug
 ```
 
+A Release host configuration is also available through `host-release`.
+
 ## Embedded SDK setup
 
-The SDK is a separately managed dependency, pinned to NXP release tag `v26.09.00`. Follow [MCUXpresso SDK setup](docs/toolchains/MCUXPRESSO_SDK.md) before building embedded examples.
+See [MCUXpresso SDK setup](docs/toolchains/MCUXPRESSO_SDK.md) for prerequisites, toolchain environment variables, manual commands and troubleshooting.
+
+## Documentation
 
 See [Architecture](docs/architecture/ARCHITECTURE.md), [Memory map](docs/architecture/MEMORY_MAP.md), [Boot flow](docs/architecture/BOOT_FLOW.md), [Firmware update](docs/architecture/FIRMWARE_UPDATE.md), and [Unit testing](docs/engineering/UNIT_TESTING.md).
 
