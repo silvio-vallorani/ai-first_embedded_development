@@ -6,7 +6,13 @@
 #include "app.h"
 #include "board.h"
 #include "fsl_common.h"
+#include "fsl_debug_console.h"
 #include "mcmgr.h"
+
+#if defined(AIED_MCUBOOT_APP)
+#include "mcuboot_app_support.h"
+#include "mflash_drv.h"
+#endif
 
 #define APP_CM7_READY_TIMEOUT_ITERATIONS (10000000UL)
 
@@ -15,6 +21,45 @@
 #endif
 
 static volatile bool s_cm7_ready = false;
+
+#if defined(AIED_MCUBOOT_APP)
+/**
+ * @brief Make a probationary (test) image permanent after the pair health check.
+ *
+ * Called only after CM7 has started and reported ready, so the confirmation covers the
+ * whole CM33 + CM7 release pair. If the image is not confirmed, MCUboot reverts the pair
+ * at the next reset.
+ */
+static void app_confirm_image(void)
+{
+    uint32_t state = kSwapType_None;
+
+    if ((mflash_drv_init() != 0) || (bl_get_image_state(0U, &state) != kStatus_Success))
+    {
+        (void)PRINTF("MCUboot: unable to read image state\r\n");
+        return;
+    }
+#if defined(AIED_SKIP_IMAGE_CONFIRM)
+    (void)PRINTF("MCUboot: image state %u, confirmation disabled in this build\r\n", (unsigned)state);
+#else
+    if (state == kSwapType_Testing)
+    {
+        if (bl_update_image_state(0U, kSwapType_Permanent) == kStatus_Success)
+        {
+            (void)PRINTF("MCUboot: test image confirmed (permanent)\r\n");
+        }
+        else
+        {
+            (void)PRINTF("MCUboot: image confirmation FAILED\r\n");
+        }
+    }
+    else
+    {
+        (void)PRINTF("MCUboot: image state %u, nothing to confirm\r\n", (unsigned)state);
+    }
+#endif
+}
+#endif
 
 /**
  * @brief Receive application events sent by the CM7 core.
@@ -46,6 +91,9 @@ int main(void)
 
     (void)MCMGR_Init();
     BOARD_InitHardware();
+
+    (void)PRINTF("\r\nAIED dual-core LED toggle %s (toggle period %u us)\r\n", APP_VERSION_STRING,
+                 (unsigned)APP_TOGGLE_PERIOD_US);
 
     if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent,
                             app_remote_event_handler,
@@ -89,11 +137,17 @@ int main(void)
     {
         if (++iteration >= APP_CM7_READY_TIMEOUT_ITERATIONS)
         {
+            (void)PRINTF("CM7 ready timeout\r\n");
             for (;;)
             {
             }
         }
     }
+    (void)PRINTF("CM7 ready\r\n");
+
+#if defined(AIED_MCUBOOT_APP)
+    app_confirm_image();
+#endif
 
     for (;;)
     {

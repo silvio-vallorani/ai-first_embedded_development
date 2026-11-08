@@ -1,5 +1,19 @@
 # QSPI NOR memory map (initial proposal)
 
+## Phase-1 active layout (ADR-0014)
+
+The firmware currently uses NXP's MCUboot reference layout, not the target layout below:
+
+| Region | Start (CPU address) | Size | Content |
+|---|---:|---:|---|
+| MCUboot | 0x28000000 | 256 KiB | FCB at +0x400, boot container at +0x1000, bootloader |
+| Primary slot | 0x28040000 | 2 MiB | Active image: header, CM33 code with embedded CM7 image, trailer |
+| Secondary slot | 0x28240000 | 2 MiB | Candidate image |
+
+The rest of the device is unused in phase 1. The target layout below remains the design goal for phase 2.
+
+## Target layout
+
 ## Reference device and geometry
 
 The EVK board manual identifies two separate 128-Mbit (16-MiB each) Winbond W25Q128JWSIQ QSPI NOR devices (U10 and U12) connected to the FlexSPI1 A/B paths. This project memory map is defined for **one device / one 16-MiB address space**, not the sum of both devices. Confirm the exact fitted ordering code and board revision against the actual EVK BOM before programming. The family datasheet describes 256-byte page programming, 4-KiB sector erase, and 32-KiB / 64-KiB block erase. The array contains 4096 4-KiB sectors. This layout uses 4-KiB units throughout. Do not infer that every board revision has identical flash population.
