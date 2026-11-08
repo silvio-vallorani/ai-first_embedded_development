@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup MCUXpresso SDK",
+      "type": "shell",
+      "windows": {
+        "command": "powershell.exe",
+        "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\setup_sdk.ps1"]
+      },
+      "linux": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/setup_sdk.sh"]
+      },
+      "osx": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/setup_sdk.sh"]
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build RT1180 dual-core firmware",
+      "type": "shell",
+      "dependsOn": "Setup MCUXpresso SDK",
+      "dependsOrder": "sequence",
+      "windows": {
+        "command": "powershell.exe",
+        "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\build_rt1180.ps1"]
+      },
+      "linux": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/build_rt1180.sh"]
+      },
+      "osx": {
+        "command": "bash",
+        "args": ["${workspaceFolder}/scripts/build_rt1180.sh"]
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Host unit tests",
+      "type": "shell",
+      "command": "ctest",
+      "args": ["--preset", "host-debug"],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
