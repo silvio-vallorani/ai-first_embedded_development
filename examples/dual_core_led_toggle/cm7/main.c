@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "app_events.h"
+#include "app.h"
 #include "board.h"
 #include "fsl_common.h"
 #include "fsl_rgpio.h"
@@ -61,7 +62,7 @@ int main(void)
 
     if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent,
                             app_remote_event_handler,
-                            NULL) != kStatus_Success)
+                            NULL) != kStatus_MCMGR_Success)
     {
         for (;;)
         {
@@ -70,7 +71,7 @@ int main(void)
 
     if (MCMGR_TriggerEvent(kMCMGR_Core0,
                            kMCMGR_RemoteApplicationEvent,
-                           APP_EVENT_CM7_READY) != kStatus_Success)
+                           APP_EVENT_CM7_READY) != kStatus_MCMGR_Success)
     {
         for (;;)
         {
