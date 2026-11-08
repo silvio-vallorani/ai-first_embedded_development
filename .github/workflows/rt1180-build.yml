@@ -63,12 +63,18 @@ jobs:
           west update_board --set board "${BOARD}"
           west list
 
+      - name: Verify upstream multicore example source
+        working-directory: mcuxpresso-sdk
+        run: |
+          test -f mcuxsdk/examples/multicore_examples/hello_world/primary/CMakeLists.txt
+          test -f mcuxsdk/examples/multicore_examples/hello_world/secondary/CMakeLists.txt
+
       - name: Build upstream CM33 + CM7 SysBuild example
         working-directory: mcuxpresso-sdk
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           west build -b "${BOARD}" --sysbuild \
-            examples/multicore_examples/hello_world/primary \
+            mcuxsdk/examples/multicore_examples/hello_world/primary \
             --config flexspi_nor_debug --toolchain armgcc \
             -Dcore_id=cm33 -p always \
             -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
