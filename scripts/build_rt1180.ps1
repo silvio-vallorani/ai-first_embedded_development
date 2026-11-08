@@ -51,7 +51,7 @@ if (-not (Test-Path (Join-Path $Overlay "primary/sysbuild.cmake")) -or -not (Tes
 
 Push-Location $SdkRoot
 try {
-    & $West build -b evkmimxrt1180 --sysbuild (Join-Path $Overlay "primary") --config flexspi_nor_debug --toolchain armgcc -Dcore_id=cm33 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always -d $BuildDir
+    & $West build -b evkmimxrt1180 --sysbuild (Join-Path $Overlay "primary") --config flexspi_nor_debug --toolchain armgcc -Dcore_id=cm33 "-DPython3_EXECUTABLE=$VenvPython" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always -d $BuildDir
     if ($LASTEXITCODE -ne 0) { throw "RT1180 SysBuild failed." }
 }
 finally {
