@@ -24,10 +24,10 @@ This is an initial architectural and host-testable software scaffold plus a firs
 2. Install the recommended extensions when prompted.
 3. Install the host prerequisites: Git, Python 3.8+, CMake and Ninja.
 4. Install Arm GNU Toolchain 14.2.x and set `ARMGCC_DIR` to its installation directory. Add its `bin` directory to `PATH`.
-5. Run **Terminal → Run Task → Setup MCUXpresso SDK** once. The SDK is installed in the sibling directory `../mcuxpresso-sdk` by default.
-6. Run **Terminal → Run Task → Build RT1180 dual-core firmware** whenever you want to rebuild.
+5. Run **Terminal → Run Task → Setup MCUXpresso SDK** once. The task creates the project-local `.venv`, installs the pinned West dependency from `requirements.txt`, and initializes the SDK in the sibling directory `../mcuxpresso-sdk` by default.
+6. Run **Terminal → Run Task → Build RT1180 dual-core firmware** whenever you want to rebuild. The build task uses West from `.venv` automatically; manual activation is not required.
 
-The SDK can be placed elsewhere by setting `MCUXPRESSO_SDK` to the workspace directory containing `.west`. On Windows, use the PowerShell scripts; on Linux/macOS, use the Bash scripts. The setup script fetches only the repositories required by the selected EVK board. It does not install the Arm toolchain.
+The SDK can be placed elsewhere by setting `MCUXPRESSO_SDK` to the workspace directory containing `.west`. On Windows, use the PowerShell scripts; on Linux/macOS, use the Bash scripts. The setup script does not install the Arm toolchain, CMake, Ninja or Git. The `.venv` directory is ignored by Git and is not shared with the SDK workspace.
 
 The embedded build creates a guarded, generated overlay under the SDK workspace, based on NXP's `hello_world` multicore SysBuild template. The source files in this repository remain the authoritative application sources. The generated overlay is never allowed to overwrite an unmarked directory.
 
