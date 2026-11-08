@@ -88,22 +88,33 @@ The setup scripts are the recommended way to create the Python environment and i
 Linux/macOS:
 
 ```sh
+PROJECT_ROOT="$(pwd)"
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
   ../mcuxpresso-sdk --mr v26.09.00
 cd ../mcuxpresso-sdk
-../ai-first_embedded_development/.venv/bin/west manifest --resolve
-../ai-first_embedded_development/.venv/bin/west update_board --set board evkmimxrt1180
-../ai-first_embedded_development/.venv/bin/west list
+"$PROJECT_ROOT/.venv/bin/west" manifest --resolve
+"$PROJECT_ROOT/.venv/bin/west" update_board --set board evkmimxrt1180
+"$PROJECT_ROOT/.venv/bin/west" list
 ```
 
 On Windows PowerShell, use:
 
 ```powershell
+$ProjectRoot = (Get-Location).Path
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\west.exe init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git ..\mcuxpresso-sdk --mr v26.09.00
+Push-Location ..\mcuxpresso-sdk
+try {
+    & "$ProjectRoot\.venv\Scripts\west.exe" manifest --resolve
+    & "$ProjectRoot\.venv\Scripts\west.exe" update_board --set board evkmimxrt1180
+    & "$ProjectRoot\.venv\Scripts\west.exe" list
+}
+finally {
+    Pop-Location
+}
 ```
 
 ## Build the upstream dual-core reference example
