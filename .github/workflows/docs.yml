@@ -12,7 +12,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # Per-ref group: pull requests must not cancel each other or a main deployment.
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
