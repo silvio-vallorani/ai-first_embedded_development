@@ -16,34 +16,78 @@ The SDK is an external dependency. Do not copy the entire SDK into this reposito
 
 ## Prerequisites
 
-Install the versions documented by NXP for SDK 26.09.00:
+Install the following host tools:
 
 - Git
 - Python 3.8 or newer
-- West
-- CMake and Ninja
-- Arm GNU Toolchain 14.2.x
+- CMake
+- Ninja
+- Arm GNU Toolchain 14.2.x (Arm GNU Toolchain 14.2.rel1)
 
-Use the NXP installation guide for the exact host-specific packages and environment setup:
-https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/gsd/installation.html
+The setup script installs West with pip when it is missing. The Arm GNU Toolchain is a separate installation and is not downloaded automatically.
 
-## Initialize a pinned SDK workspace
+Use the [NXP installation guide for SDK 26.09.00](https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/gsd/installation.html) for host-specific packages.
 
-Run these commands outside this repository, for example from your firmware workspace directory:
+## Recommended VS Code workflow
 
-```sh
-west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
-  mcuxpresso-sdk --mr v26.09.00
-cd mcuxpresso-sdk
-west update
+1. Clone the project and open the repository root in VS Code.
+2. Install the recommended extensions when VS Code prompts you.
+3. Install Arm GNU Toolchain 14.2.rel1 and add its `bin` directory to `PATH`.
+4. Set `ARMGCC_DIR` to the toolchain installation root (the directory containing `bin`).
+5. Run **Terminal → Run Task → Setup MCUXpresso SDK**.
+6. Run **Terminal → Run Task → Build RT1180 dual-core firmware**.
+
+The SDK workspace defaults to a sibling directory named `mcuxpresso-sdk`. To use another location, set `MCUXPRESSO_SDK` to the directory that contains the West `.west` folder. Restart VS Code after changing persistent environment variables so its integrated terminal inherits them.
+
+The scripts are available for both Windows PowerShell and Linux/macOS Bash:
+
+| Purpose | Windows | Linux / macOS |
+|---|---|---|
+| Initialize SDK | `scripts/setup_sdk.ps1` | `scripts/setup_sdk.sh` |
+| Build CM33 + CM7 | `scripts/build_rt1180.ps1` | `scripts/build_rt1180.sh` |
+
+The setup script initializes the manifest at `v26.09.00`, resolves it, and runs `west update_board --set board evkmimxrt1180`. This targeted update avoids cloning every repository in the full SDK manifest.
+
+Example PowerShell environment setup (adjust paths to the installed toolchain):
+
+```powershell
+[Environment]::SetEnvironmentVariable("ARMGCC_DIR", "C:\NXP\arm-gnu-toolchain-14.2.rel1", "User")
+[Environment]::SetEnvironmentVariable("MCUXPRESSO_SDK", "D:\work\mcuxpresso-sdk", "User")
 ```
 
-The full SDK checkout downloads multiple repositories and requires several gigabytes of disk space. NXP also documents a targeted board repository update workflow; use the manifest's board selection for `evkmimxrt1180` if you want to reduce the checkout.
-
-Verify the selected manifest revision:
+Example Bash environment setup:
 
 ```sh
+export ARMGCC_DIR="$HOME/toolchains/arm-gnu-toolchain-14.2.rel1"
+export MCUXPRESSO_SDK="$HOME/work/mcuxpresso-sdk"
+export PATH="$ARMGCC_DIR/bin:$PATH"
+```
+
+## What the embedded build does
+
+The build script creates a generated project overlay inside the SDK workspace at:
+
+```text
+mcuxsdk/examples/multicore_examples/aied_dual_core_led_toggle/
+```
+
+It copies NXP's `hello_world` multicore SysBuild template, then replaces only the CM33 and CM7 application sources and the shared `app_events.h`. NXP board support, linker scripts, startup, image-copy and packaging configuration remain sourced from the pinned SDK.
+
+The generated overlay is marked with `.aied-generated-overlay`. The script refuses to delete or replace a directory at that path unless the marker exists. The firmware build output is written to `build/rt1180-dual-core-led-toggle` in this repository (override with `RT1180_BUILD_DIR`).
+
+The build enables CMake compilation database export when supported by the SDK. VS Code C/C++ IntelliSense is configured to use that database and to browse the project and SDK source trees. If IntelliSense cannot find SDK headers before the first embedded build, run the build task once and verify that `MCUXPRESSO_SDK` is set in the VS Code process environment.
+
+## Manual setup
+
+If you prefer to initialize the workspace manually:
+
+```sh
+python -m pip install --user west
+west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
+  ../mcuxpresso-sdk --mr v26.09.00
+cd ../mcuxpresso-sdk
 west manifest --resolve
+west update_board --set board evkmimxrt1180
 west list
 ```
 
@@ -53,12 +97,20 @@ From the MCUXpresso SDK workspace root:
 
 ```sh
 west build -b evkmimxrt1180 --sysbuild \
-  examples/multicore_examples/hello_world/primary \
+  mcuxsdk/examples/multicore_examples/hello_world/primary \
   --config flexspi_nor_debug --toolchain armgcc \
   -Dcore_id=cm33 -p always
 ```
 
-The repository's CI workflow first builds this unmodified NXP reference example. It then creates a temporary copy of the NXP `hello_world` SysBuild project, replaces only the two application `main.c` files with the sources from `examples/dual_core_led_toggle`, and builds the resulting CM33 + CM7 LED-toggle firmware. NXP board support, linker scripts, startup, image-copy and packaging configuration remain sourced from the pinned SDK.
+## Host unit tests
+
+The embedded West build is separate from the repository's host CMake presets. To build and run host tests:
+
+```sh
+cmake --preset host-debug
+cmake --build --preset host-debug
+ctest --preset host-debug
+```
 
 ## Build validation
 
