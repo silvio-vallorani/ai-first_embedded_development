@@ -1,5 +1,6 @@
 site_name: AI-First Embedded Development
 site_description: Multi-board dual-core embedded firmware architecture
+site_url: https://silvio-vallorani.github.io/ai-first_embedded_development/
 repo_url: https://github.com/silvio-vallorani/ai-first_embedded_development
 docs_dir: docs
 nav:
@@ -12,3 +13,4 @@ nav:
       - Decisions: architecture/decisions/README.md
   - Engineering:
       - Unit testing: engineering/UNIT_TESTING.md
+  - API Reference: https://silvio-vallorani.github.io/ai-first_embedded_development/doxygen/
