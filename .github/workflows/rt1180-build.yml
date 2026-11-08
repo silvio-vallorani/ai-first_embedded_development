@@ -9,6 +9,7 @@ on:
       - 'examples/dual_core_led_toggle/**'
       - 'docs/toolchains/MCUXPRESSO_SDK.md'
       - 'scripts/**'
+      - 'requirements.txt'
       - '.vscode/**'
       - 'CMakePresets.json'
       - 'README.md'
@@ -19,6 +20,7 @@ on:
       - 'examples/dual_core_led_toggle/**'
       - 'docs/toolchains/MCUXPRESSO_SDK.md'
       - 'scripts/**'
+      - 'requirements.txt'
       - '.vscode/**'
       - 'CMakePresets.json'
       - 'README.md'
@@ -33,7 +35,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      SDK_TAG: v26.09.00
       BOARD: evkmimxrt1180
       ARMGCC_DIR: ${{ github.workspace }}/toolchains/arm-gnu-toolchain-14.2.rel1
       MCUXPRESSO_SDK: ${{ github.workspace }}/mcuxpresso-sdk
@@ -41,11 +42,15 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install host dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes git python3-pip python3-venv cmake ninja-build xz-utils
-          python3 -m pip install --user --break-system-packages west
+          sudo apt-get install --yes git cmake ninja-build xz-utils
 
       - name: Install Arm GNU Toolchain 14.2.x
         run: |
@@ -57,20 +62,8 @@ jobs:
           echo "${ARMGCC_DIR}/bin" >> "${GITHUB_PATH}"
           "${ARMGCC_DIR}/bin/arm-none-eabi-gcc" --version
 
-      - name: Initialize pinned MCUXpresso SDK manifest
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
-            mcuxpresso-sdk --mr "${SDK_TAG}"
-          cd mcuxpresso-sdk
-          west manifest --resolve
-
-      - name: Fetch repositories required by the EVK
-        working-directory: mcuxpresso-sdk
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          west update_board --set board "${BOARD}"
-          west list
+      - name: Create Python environment and initialize pinned MCUXpresso SDK
+        run: bash scripts/setup_sdk.sh
 
       - name: Verify upstream multicore example source
         working-directory: mcuxpresso-sdk
@@ -81,17 +74,14 @@ jobs:
       - name: Build upstream CM33 + CM7 SysBuild example
         working-directory: mcuxpresso-sdk
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          west build -b "${BOARD}" --sysbuild \
+          "${GITHUB_WORKSPACE}/.venv/bin/west" build -b "${BOARD}" --sysbuild \
             mcuxsdk/examples/multicore_examples/hello_world/primary \
             --config flexspi_nor_debug --toolchain armgcc \
             -Dcore_id=cm33 -p always \
             -d "${GITHUB_WORKSPACE}/build/rt1180-baseline"
 
       - name: Build project CM33 + CM7 LED-toggle SysBuild application
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          bash scripts/build_rt1180.sh
+        run: bash scripts/build_rt1180.sh
 
       - name: Upload generated firmware artifacts
         if: always()
