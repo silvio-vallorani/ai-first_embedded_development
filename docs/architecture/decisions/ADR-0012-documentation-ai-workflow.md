@@ -10,7 +10,7 @@ Architecture, implementation and AI-assisted contributions must remain aligned.
 Use MkDocs for canonical documentation, Doxygen for API documentation, GitHub Pages for publication, and repository-maintained ADRs. Provide `AGENTS.md`, `CLAUDE.md` and structured AI guidance.
 
 ## Consequences
-Wiki content is onboarding/troubleshooting material and links back to canonical docs. AI agents must update ADRs when architecture changes.
+The GitHub Wiki is a generated, read-only publication of the repository Markdown documentation (see `WIKI_PUBLISHING.md`); it is never edited directly. AI agents must update ADRs when architecture changes.
 
 ## Validation
 CI builds documentation and checks links; reviews check ADR/documentation drift.
