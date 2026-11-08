@@ -10,6 +10,8 @@
 | Reference board | `evkmimxrt1180` |
 | MCU | MIMXRT1189 |
 | Arm GNU Toolchain | 14.2.x |
+| West | 1.4.0 (pinned in `requirements.txt`) |
+| Python environment | Project-local `.venv` |
 | Build orchestration | West + CMake + Ninja + SysBuild |
 
 The SDK is an external dependency. Do not copy the entire SDK into this repository or follow its moving `main` branch for a reproducible build.
@@ -24,7 +26,7 @@ Install the following host tools:
 - Ninja
 - Arm GNU Toolchain 14.2.x (Arm GNU Toolchain 14.2.rel1)
 
-The setup script installs West with pip when it is missing. The Arm GNU Toolchain is a separate installation and is not downloaded automatically.
+West and its Python dependencies are installed from the pinned `requirements.txt` into the repository's `.venv`. No global `pip install`, `pip --user`, or manual virtual-environment activation is required. CMake, Ninja, Git and the Arm GNU Toolchain remain system-level tools.
 
 Use the [NXP installation guide for SDK 26.09.00](https://docs.mcuxpresso.nxp.com/mcuxsdk/26.09.00/gsd/installation.html) for host-specific packages.
 
@@ -34,7 +36,7 @@ Use the [NXP installation guide for SDK 26.09.00](https://docs.mcuxpresso.nxp.co
 2. Install the recommended extensions when VS Code prompts you.
 3. Install Arm GNU Toolchain 14.2.rel1 and add its `bin` directory to `PATH`.
 4. Set `ARMGCC_DIR` to the toolchain installation root (the directory containing `bin`).
-5. Run **Terminal → Run Task → Setup MCUXpresso SDK**.
+5. Run **Terminal → Run Task → Setup MCUXpresso SDK**. This creates `.venv`, installs the pinned Python dependencies, initializes the manifest at `v26.09.00`, and fetches the repositories required by the EVK.
 6. Run **Terminal → Run Task → Build RT1180 dual-core firmware**.
 
 The SDK workspace defaults to a sibling directory named `mcuxpresso-sdk`. To use another location, set `MCUXPRESSO_SDK` to the directory that contains the West `.west` folder. Restart VS Code after changing persistent environment variables so its integrated terminal inherits them.
@@ -43,8 +45,10 @@ The scripts are available for both Windows PowerShell and Linux/macOS Bash:
 
 | Purpose | Windows | Linux / macOS |
 |---|---|---|
-| Initialize SDK | `scripts/setup_sdk.ps1` | `scripts/setup_sdk.sh` |
+| Initialize Python environment and SDK | `scripts/setup_sdk.ps1` | `scripts/setup_sdk.sh` |
 | Build CM33 + CM7 | `scripts/build_rt1180.ps1` | `scripts/build_rt1180.sh` |
+
+The build scripts invoke West directly from `.venv`; you do not need to activate it manually. VS Code is configured to use the same interpreter for Python tooling. If you delete `.venv`, rerun the setup task to recreate it.
 
 The setup script initializes the manifest at `v26.09.00`, resolves it, and runs `west update_board --set board evkmimxrt1180`. This targeted update avoids cloning every repository in the full SDK manifest.
 
@@ -79,24 +83,37 @@ The build enables CMake compilation database export when supported by the SDK. V
 
 ## Manual setup
 
-If you prefer to initialize the workspace manually:
+The setup scripts are the recommended way to create the Python environment and initialize the SDK. If you need to do it manually, run these commands from the repository root.
+
+Linux/macOS:
 
 ```sh
-python -m pip install --user west
-west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/west init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git \
   ../mcuxpresso-sdk --mr v26.09.00
 cd ../mcuxpresso-sdk
-west manifest --resolve
-west update_board --set board evkmimxrt1180
-west list
+../ai-first_embedded_development/.venv/bin/west manifest --resolve
+../ai-first_embedded_development/.venv/bin/west update_board --set board evkmimxrt1180
+../ai-first_embedded_development/.venv/bin/west list
+```
+
+On Windows PowerShell, use:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\west.exe init -m https://github.com/nxp-mcuxpresso/mcuxsdk-manifests.git ..\mcuxpresso-sdk --mr v26.09.00
 ```
 
 ## Build the upstream dual-core reference example
 
-From the MCUXpresso SDK workspace root:
+From the MCUXpresso SDK workspace root, use the West executable in the project environment:
+
+Linux/macOS:
 
 ```sh
-west build -b evkmimxrt1180 --sysbuild \
+../ai-first_embedded_development/.venv/bin/west build -b evkmimxrt1180 --sysbuild \
   mcuxsdk/examples/multicore_examples/hello_world/primary \
   --config flexspi_nor_debug --toolchain armgcc \
   -Dcore_id=cm33 -p always
@@ -119,7 +136,7 @@ The GitHub Actions workflow `RT1189 embedded build` validates two distinct outpu
 1. The unmodified NXP CM33 + CM7 multicore baseline.
 2. This repository's CM33 + CM7 dual-core LED-toggle application, built through the NXP SysBuild project template.
 
-The workflow uploads generated ELF, BIN, HEX and MAP files as a build artifact. A successful CI build confirms compilation and image packaging; it does not replace a physical EVK test of the LED, inter-core timing or boot behaviour.
+The workflow uses the same pinned `requirements.txt` and setup script as the local VS Code workflow, then uploads generated ELF, BIN, HEX and MAP files as a build artifact. A successful CI build confirms compilation and image packaging; it does not replace a physical EVK test of the LED, inter-core timing or boot behaviour.
 
 NXP documentation:
 - SDK 26.09.00 release: https://github.com/nxp-mcuxpresso/mcuxsdk-manifests/releases/tag/v26.09.00
