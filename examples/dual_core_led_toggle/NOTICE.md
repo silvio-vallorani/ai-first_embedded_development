@@ -1,0 +1,1 @@
+This example is an original application layer intended to be integrated with NXP MCUXpresso SDK board projects. NXP SDK sources, startup files, drivers, MCMGR and board support files are not copied into this repository and remain subject to their respective NXP licenses.
