@@ -1,7 +1,7 @@
 {
   "C_Cpp.default.cppStandard": "c++17",
   "C_Cpp.default.cStandard": "c11",
-  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/rt1180-dual-core-led-toggle/compile_commands.json",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/rt1180-led-toggle/compile_commands.json",
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/**",
     "${workspaceFolder}/../mcuxpresso-sdk/mcuxsdk/**",

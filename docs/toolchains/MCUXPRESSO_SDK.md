@@ -75,9 +75,19 @@ The build script creates a generated project overlay inside the SDK workspace at
 mcuxsdk/examples/multicore_examples/aied_dual_core_led_toggle/
 ```
 
-It copies NXP's `hello_world` multicore SysBuild template, then replaces only the CM33 and CM7 application sources and the shared `app_events.h`. NXP board support, linker scripts, startup, image-copy and packaging configuration remain sourced from the pinned SDK.
+It copies NXP's `hello_world` multicore SysBuild template, replaces the CM33 and CM7 application sources and the shared `app_events.h`, and renames the template image names (`hello_world_primary_core` / `hello_world_secondary_core`) and IDE workspace name to `led_toggle_*`. The script stops if any template image name remains. NXP board support, linker scripts, startup, image-copy and packaging configuration remain sourced from the pinned SDK; the board-port path `multicore_examples/hello_world` is NXP-owned and is not renamed.
 
-The generated overlay is marked with `.aied-generated-overlay`. The script refuses to delete or replace a directory at that path unless the marker exists. The firmware build output is written to `build/rt1180-dual-core-led-toggle` in this repository (override with `RT1180_BUILD_DIR`).
+Project build outputs:
+
+| Image | Path under `build/rt1180-led-toggle/` |
+|---|---|
+| CM33 (primary) | `primary/led_toggle_primary_core_cm33.elf` |
+| CM7 (secondary) | `led_toggle_secondary_core/led_toggle_secondary_core_cm7.elf` |
+| CM7 image embedded in CM33 | `led_toggle_secondary_core/armgcc/core1_image.bin` |
+
+On Windows, the Arm GNU Toolchain compiler does not support paths longer than 260 characters even when Windows long paths are enabled. The deepest build file (`-fstack-usage` output under `led_toggle_secondary_core/CMakeFiles/...`) is about 165 characters below the build directory, so keep the build directory path under about 90 characters. Otherwise the build fails with `cannot open ... .su for writing: No such file or directory`. Clone the repository into a short path or set `RT1180_BUILD_DIR` to a short directory.
+
+The generated overlay is marked with `.aied-generated-overlay`. The script refuses to delete or replace a directory at that path unless the marker exists. The firmware build output is written to `build/rt1180-led-toggle` in this repository (override with `RT1180_BUILD_DIR`).
 
 The build enables CMake compilation database export when supported by the SDK. VS Code C/C++ IntelliSense is configured to use that database and to browse the project and SDK source trees. If IntelliSense cannot find SDK headers before the first embedded build, run the build task once and verify that `MCUXPRESSO_SDK` is set in the VS Code process environment.
 
