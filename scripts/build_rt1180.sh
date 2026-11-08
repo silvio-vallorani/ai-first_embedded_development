@@ -62,7 +62,8 @@ test -f "${OVERLAY}/secondary/CMakeLists.txt"
     "${WEST_BIN}" build -b evkmimxrt1180 --sysbuild \
         "${OVERLAY}/primary" \
         --config flexspi_nor_debug --toolchain armgcc \
-        -Dcore_id=cm33 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always \
+        -Dcore_id=cm33 -DPython3_EXECUTABLE="${VENV_DIR}/bin/python" \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -p always \
         -d "${BUILD_DIR}"
 )
 
