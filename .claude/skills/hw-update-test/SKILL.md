@@ -1,18 +1,18 @@
 ---
 name: hw-update-test
-description: Run the MCUboot update test on a connected MIMXRT1180-EVK (T1 boot v1, T2 confirmed update to v2, T3 rollback of unconfirmed v3, T4 persistent log check). Flashes the board, so only the user starts it.
+description: Run the MCUboot update test on a connected AM254-5 custom board (default target) or MIMXRT1180-EVK (T1 boot v1, T2 confirmed update to v2, T3 rollback of unconfirmed v3, T4 persistent log check). Flashes the board, so only the user starts it.
 disable-model-invocation: true
 ---
 
-# MCUboot update test on the EVK
+# MCUboot update test on the board
 
 Follow `docs/engineering/MCUBOOT_UPDATE_TEST.md` exactly; it defines the pass criteria. This skill adds the procedure for running it with the user.
 
 ## Before starting
 
-1. Ask the user to confirm that the EVK is connected through MCU-Link and that no other tool holds the probe or the VCOM port.
+1. Ask the user which board is connected (AM254-5 through the Tag-Connect J1, or the EVK through its MCU-Link USB) and confirm that no other tool holds the probe or the serial port. For the AM254-5 pass `--board am254-5` to every `rt1180_mcuboot.py` command.
 2. Check the probe: `C:\nxp\LinkServer_*\LinkServer.exe probes`. Find the VCOM port: `Get-PnpDevice -PresentOnly | ? FriendlyName -match 'VCOM|MCU-Link'`.
-3. Make sure `build/rt1180-update-test/images.txt` exists and is newer than the last source change. Otherwise build first (skill `rt1180-build`).
+3. Make sure `build/<board>-update-test/images.txt` (`am254-5` or `rt1180` for the EVK) exists and is newer than the last source change. Otherwise build first (skill `rt1180-build`).
 4. Warn the user that T1 erases the whole flash, including the persistent logs.
 
 ## Running each step

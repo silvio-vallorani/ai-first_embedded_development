@@ -14,3 +14,5 @@ Board pinmux, clocks, flash geometry, boot straps and memory maps remain board-o
 
 ## Validation
 Add a second custom-board configuration and ensure shared services compile unchanged.
+
+2026-11-09: the AM254-5 custom board (`boards/am254-5`, `docs/boards/AM254-5.md`) is the second board. It reuses the SDK EVK board support where the hardware matches and owns its LED definition and CM7 pin mux; the application and shared services compile unchanged for both boards. Hardware validation pending.

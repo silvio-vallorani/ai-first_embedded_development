@@ -60,6 +60,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # Custom-board hardware projects are private (hw_reference/ is git-ignored) and must never be published.
+      - name: No hardware design files in the repository
+        run: |
+          if git ls-files | grep -iE '^hw_reference/|\.(kicad_(sch|pcb|pro|prl|sym|mod|jobset))$|(^|/)fp-info-cache$'; then
+            echo "::error::Hardware design files are tracked; they must stay out of the repository."
+            exit 1
+          fi
       # The binary is installed directly: gitleaks-action downloads from a legacy URL that fails intermittently.
       - name: Install gitleaks 8.30.1 (checksum verified)
         env:

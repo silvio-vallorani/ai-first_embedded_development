@@ -40,7 +40,7 @@ Encryption, TrustZone and the flash layout all change the memory map and image f
 
 Decides together: the new flash layout (including the planned recovery stage and redundant MCUboot), the TrustZone partition, the encryption strategy, the update strategy (encryption likely forces overwrite/remap instead of swap-move, which affects the ADR-0006 rollback), and the key inventory.
 
-Draft: [ADR-0016](../architecture/decisions/ADR-0016-security-architecture-phase2.md). Preceded by EVK spikes: OTFAD XIP decryption with a run-time key, FlexSPI remap, ELE key blobs and counters, TrustZone with MCUboot, TRDC faults, image sizes. Requirements confirmed 2026-11-09: confidentiality, rollback, images larger than RAM, authenticated debug. Proposed strategy: direct XIP from two OTFAD-encrypted slots (per-slot builds) with MCUboot revert; candidates travel as MCUboot encrypted images and are re-encrypted for OTFAD in place by MCUboot with a power-cut-safe journal; per-slot OTFAD keys as ELE blobs. Highest-risk items: the OTFAD backend on the ELE (the SDK one uses CAAM) and protecting the MCUboot decryption key.
+Draft: [ADR-0016](../architecture/decisions/ADR-0016-security-architecture-phase2.md). Preceded by AM254-5 spikes: OTFAD XIP decryption with a run-time key, FlexSPI remap, ELE key blobs and counters, TrustZone with MCUboot, TRDC faults, image sizes. Requirements confirmed 2026-11-09: confidentiality, rollback, images larger than RAM, authenticated debug. Proposed strategy: direct XIP from two OTFAD-encrypted slots (per-slot builds) with MCUboot revert; candidates travel as MCUboot encrypted images and are re-encrypted for OTFAD in place by MCUboot with a power-cut-safe journal; per-slot OTFAD keys as ELE blobs. Highest-risk items: the OTFAD backend on the ELE (the SDK one uses CAAM) and protecting the MCUboot decryption key.
 
 ### Phase C — per-core permissions with TRDC (hardware)
 
@@ -52,7 +52,7 @@ Secure world: boot, EdgeLock Enclave and crypto, image confirmation, keys, log w
 
 ### Phase E — keys and lifecycle (writes irreversible fuses)
 
-Separate keys for the EdgeLock Enclave boot container SRKs (AHAB), MCUboot signing, image encryption and debug authentication. Keys in an HSM/KMS; signing in a manually approved release step, never on hosted runners. Signed MCUboot container and SRK hash in fuses, hardware monotonic counter for anti-rollback (completes ADR-0008), authenticated debug, OEM Closed lifecycle. Only on a dedicated, sacrificial EVK and with explicit authorization for every fuse operation.
+Separate keys for the EdgeLock Enclave boot container SRKs (AHAB), MCUboot signing, image encryption and debug authentication. Keys in an HSM/KMS; signing in a manually approved release step, never on hosted runners. Signed MCUboot container and SRK hash in fuses, hardware monotonic counter for anti-rollback (completes ADR-0008), authenticated debug, OEM Closed lifecycle. Only on the AM254-5 custom board (the designated sacrificial board, `docs/boards/AM254-5.md`) and with explicit authorization for every fuse operation.
 
 ### Phase F — field update
 
@@ -60,7 +60,7 @@ UART/xmodem transport, then network, with secure distribution of updates (Annex 
 
 ## Not verified at analysis date
 
-- Actual ROM/EdgeLock Enclave behavior on the EVK (TRDC defaults, secure/non-secure FlexSPI aliases, IEE write support): the board was not connected.
+- Actual ROM/EdgeLock Enclave behavior on hardware (AM254-5; TRDC defaults, secure/non-secure FlexSPI aliases, IEE write support): the board was not connected.
 - The CRA classification of the final product (default, important or critical), which determines the conformity assessment procedure.
 
 ## Progress
@@ -68,5 +68,5 @@ UART/xmodem transport, then network, with secure distribution of updates (Annex 
 | Phase | Status |
 |---|---|
 | A | Implemented 2026-11-09 (ADR-0011, ADR-0015). The first scan found fixable high vulnerabilities in the signing tools (cryptography 44.0.2, cbor2 5.6.5; build-time only, not in the firmware): updated to 50.0.2 and 5.9.0 |
-| B | Draft ADR-0016 (proposed); EVK spikes S1–S6 pending |
+| B | Draft ADR-0016 (proposed); AM254-5 spikes S1–S7 pending |
 | C–F | Not started |

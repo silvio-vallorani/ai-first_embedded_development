@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Build, sign and flash the MCUboot update-test images for the MIMXRT1180-EVK (ADR-0014).
+"""Build, sign and flash the MCUboot update-test images for MIMXRT1189 boards (ADR-0014).
 
 Run with the project virtual environment, for example:
 
     .venv/Scripts/python scripts/rt1180_mcuboot.py build      (Windows)
     .venv/bin/python scripts/rt1180_mcuboot.py build          (Linux/macOS)
-    .venv/Scripts/python scripts/rt1180_mcuboot.py flash initial
+    .venv/Scripts/python scripts/rt1180_mcuboot.py --board am254-5 build
+    .venv/Scripts/python scripts/rt1180_mcuboot.py --board am254-5 flash initial
     .venv/Scripts/python scripts/rt1180_mcuboot.py check-release <image.bin>   (release guard, ADR-0011)
 
-The update-test procedure is described in docs/engineering/MCUBOOT_UPDATE_TEST.md.
+--board selects the board under boards/ (default mimxrt1180_evk). The bootloader is the same for
+both boards (it only uses the debug UART and FlexSPI1 port A, wired identically). LINKSERVER_DEVICE
+overrides the LinkServer device/board string. The update-test procedure is described in
+docs/engineering/MCUBOOT_UPDATE_TEST.md.
 """
 
 from __future__ import annotations
@@ -29,7 +33,8 @@ IMGTOOL = MCUBOOT_DIR / "scripts" / "imgtool.py"
 # shortcut: NXP's public development key (ADR-0014), replace with a protected key before production.
 SIGNING_KEY = MCUBOOT_DIR / "boot" / "nxp_mcux_sdk" / "keys" / "sign-ecdsa-p256-priv.pem"
 
-OUTPUT_DIR = ROOT / "build" / "rt1180-update-test"
+BOARD = "mimxrt1180_evk"  # set from --board in main()
+OUTPUT_DIR = ROOT / "build" / "rt1180-update-test"  # per board, set in main()
 BOOTLOADER_BUILD_DIR = ROOT / "build" / "rt1180-mcuboot"
 BOOTLOADER_ELF = BOOTLOADER_BUILD_DIR / "mcuboot_opensource_cm33.elf"
 APP_BIN_NAME = "led_toggle_primary_core_cm33.bin"
@@ -40,7 +45,13 @@ SECONDARY_SLOT = 0x28240000
 SLOT_SIZE = 0x200000
 HEADER_SIZE = 0x400
 
-LINKSERVER_DEVICE = "MIMXRT1189:MIMXRT1180-EVK"
+# The EVK flash configuration also fits the AM254-5 (same W25Q128JW on FlexSPI1 port A).
+LINKSERVER_DEVICE = os.environ.get("LINKSERVER_DEVICE", "MIMXRT1189:MIMXRT1180-EVK")
+
+
+def build_prefix() -> str:
+    """Short build-directory prefix of the selected board (Windows path-length limit)."""
+    return "rt1180" if BOARD == "mimxrt1180_evk" else BOARD
 
 
 @dataclass(frozen=True)
@@ -105,17 +116,17 @@ def build_bootloader() -> None:
 
 def build_app(image: TestImage) -> Path:
     """Build one MCUboot application variant and return its raw binary."""
-    build_dir = ROOT / "build" / f"rt1180-ut-{image.name}"
+    build_dir = ROOT / "build" / f"{build_prefix()}-ut-{image.name}"
     env = dict(os.environ, RT1180_BUILD_DIR=str(build_dir))
     if os.name == "nt":
         command = [
             "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
-            "-File", ROOT / "scripts" / "build_rt1180.ps1", "-McuBoot",
+            "-File", ROOT / "scripts" / "build_rt1180.ps1", "-Board", BOARD, "-McuBoot",
             "-Version", image.version, "-TogglePeriodUs", str(image.toggle_period_us),
         ] + ([] if image.confirm else ["-NoConfirm"])
     else:
         command = [
-            "bash", ROOT / "scripts" / "build_rt1180.sh", "--mcuboot",
+            "bash", ROOT / "scripts" / "build_rt1180.sh", "--board", BOARD, "--mcuboot",
             "--version", image.version, "--toggle-period-us", str(image.toggle_period_us),
         ] + ([] if image.confirm else ["--no-confirm"])
     run(command, env=env)
@@ -154,7 +165,7 @@ def command_build(_: argparse.Namespace) -> None:
     build_bootloader()
     shutil.copy2(BOOTLOADER_ELF, OUTPUT_DIR / BOOTLOADER_ELF.name)
     lines = [
-        "MCUboot update-test images (ADR-0014, NXP reference layout)",
+        f"MCUboot update-test images for {BOARD} (ADR-0014, NXP reference layout)",
         f"bootloader  {BOOTLOADER_ELF.name}  ELF, programmed from 0x28000000",
     ]
     for image in IMAGES:
@@ -222,7 +233,9 @@ def command_flash(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    global BOARD, OUTPUT_DIR
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--board", default=BOARD, help="board under boards/ (mimxrt1180_evk or am254-5)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("build", help="build bootloader and signed v1/v2/v3 images").set_defaults(func=command_build)
     flash = sub.add_parser("flash", help="program one step of the update test with LinkServer")
@@ -237,6 +250,10 @@ def main() -> None:
     check.add_argument("images", nargs="+", type=Path)
     check.set_defaults(func=command_check_release)
     args = parser.parse_args()
+    if not (ROOT / "boards" / args.board / "include" / "aied_board.h").is_file():
+        sys.exit(f"Error: unknown board {args.board} (expected boards/<name>/include/aied_board.h).")
+    BOARD = args.board
+    OUTPUT_DIR = ROOT / "build" / f"{build_prefix()}-update-test"
     args.func(args)
 
 

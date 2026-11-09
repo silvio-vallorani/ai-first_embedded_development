@@ -18,7 +18,7 @@ Applications must not depend directly on NXP SDK types or RTOS primitives. Hardw
 
 ## Targets
 
-Examples: `mimxrt1180_evk_m33`, `mimxrt1180_evk_m7`, `custom_rt1189_m33`, `custom_rt1189_m7`. A target is a board + core + configuration tuple.
+Examples: `mimxrt1180_evk_m33`, `mimxrt1180_evk_m7`, `am254-5_m33`, `am254-5_m7`. A target is a board + core + configuration tuple.
 
 ## Core responsibilities
 
