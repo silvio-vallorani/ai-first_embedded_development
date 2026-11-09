@@ -26,6 +26,8 @@ The SDK workspace is `../mcuxpresso-sdk`. If `west update_board` fails with "unt
 | LED example, direct ROM boot | `.\scripts\build_rt1180.ps1` | `build/rt1180-led-toggle` |
 | LED example for MCUboot slot | `.\scripts\build_rt1180.ps1 -McuBoot [-Version X.Y.Z] [-TogglePeriodUs N] [-NoConfirm]` | `build/rt1180-led-mcuboot` |
 | MCUboot + signed v1/v2/v3 test set | `.\.venv\Scripts\python.exe scripts\rt1180_mcuboot.py build` | `build/rt1180-update-test` |
+| SBOM of bootloader + v1 (after the test set) | `python scripts/generate_sbom.py` | `build/sbom/aied-rt1180-firmware.spdx.json` |
+| Release guard (fails on dev-key images) | `.\.venv\Scripts\python.exe scripts\rt1180_mcuboot.py check-release <image.bin>` | exit code |
 
 On Linux/macOS use `bash scripts/build_rt1180.sh [--mcuboot ...]` and `.venv/bin/python`. Capture long build output to a file in the scratchpad and grep it for `error:|undefined reference|FAILED|CMake Error`. The jsonschema warnings from the SDK are harmless.
 
