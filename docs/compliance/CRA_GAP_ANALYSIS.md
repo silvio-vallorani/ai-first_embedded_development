@@ -16,7 +16,7 @@ Key dates: vulnerability and incident **reporting obligations (Art. 14) apply fr
 | Key management | Not met | Images signed with NXP's **public** ECDSA-P256 development key (`scripts/rt1180_mcuboot.py`); ADR-0011 forbids production keys on hosted runners | Unsigned MCUboot ROM container (OEM Open lifecycle), no SRK fuses, no production keys, no HSM/signing service, no rotation/revocation, open debug port without authentication, no guard against releasing dev-key images |
 | Anti-rollback | Not met | `security_version` floor in host-tested code (not used on target) | MCUboot downgrade prevention and hardware counter not enabled (ADR-0008 not met) |
 | TrustZone | Not met | Cautionary notes only | CM33 runs as a single world: no Secure/Non-Secure partition, no SAU configuration in the project |
-| Encrypted image with runtime decryption | Not met | — | Images in plaintext in flash and in transit. The SDK MCUboot `encrypted_xip` extension supports BEE, OTFAD, IPED and NPX but **not IEE** (the RT1180 engine), and only in overwrite/remap modes, not the swap-move mode used today |
+| Encrypted image with runtime decryption | Not met | — | Images in plaintext in flash and in transit. The RT1189 has OTFAD in FlexSPI1/2 for XIP decryption (and IEE for other regions). The SDK MCUboot `encrypted_xip` OTFAD backend wraps keys with CAAM, which the RT1189 lacks (it has the EdgeLock Enclave), and works only in overwrite mode, not with the swap-move used today. *Corrected 2026-11-09: the first version named IEE as the only engine.* |
 | Per-core permissions (TRDC) | Not met | Required by ADR-0003/ADR-0005; SDK `board.c` provides `BOARD_RequestTRDC` and `APP_CommonTrdcDACSetting` | No TRDC policy: CM7, DMA and DAP keep default permissions; CM7 can write flash, CM33 RAM and peripherals |
 | Vulnerability handling (Annex I part II) | Not met | — | No `SECURITY.md` / coordinated vulnerability disclosure, no support period, no ENISA reporting procedure, no `LICENSE` |
 | Attack surface / data | Partial | Persistent logs with boot events | Unauthenticated `logdump` UART command; security events (signature rejected, rollback, confirm) not logged; no secure data erasure |
@@ -40,7 +40,7 @@ Encryption, TrustZone and the flash layout all change the memory map and image f
 
 Decides together: the new flash layout (including the planned recovery stage and redundant MCUboot), the TrustZone partition, the encryption strategy, the update strategy (encryption likely forces overwrite/remap instead of swap-move, which affects the ADR-0006 rollback), and the key inventory.
 
-Preceded by an **encryption spike** on the EVK: IEE on-the-fly XIP decryption (SDK `demo_apps/iee_apc`) and whether IEE also encrypts on write. Options: (a) port an IEE backend for `encrypted_xip`; (b) MCUboot encrypted images (ECIES-P256 + AES-CTR) for transport and the secondary slot, plus IEE for the active slot; (c) RAM load decrypted by MCUboot. Highest-risk item of the plan.
+Draft: [ADR-0016](../architecture/decisions/ADR-0016-security-architecture-phase2.md). Preceded by EVK spikes: OTFAD XIP decryption with a run-time key, FlexSPI remap, ELE key blobs and counters, TrustZone with MCUboot, TRDC faults, image sizes. Requirements confirmed 2026-11-09: confidentiality, rollback, images larger than RAM, authenticated debug. Proposed strategy: direct XIP from two OTFAD-encrypted slots (per-slot builds) with MCUboot revert; candidates travel as MCUboot encrypted images and are re-encrypted for OTFAD in place by MCUboot with a power-cut-safe journal; per-slot OTFAD keys as ELE blobs. Highest-risk items: the OTFAD backend on the ELE (the SDK one uses CAAM) and protecting the MCUboot decryption key.
 
 ### Phase C — per-core permissions with TRDC (hardware)
 
@@ -68,4 +68,5 @@ UART/xmodem transport, then network, with secure distribution of updates (Annex 
 | Phase | Status |
 |---|---|
 | A | Implemented 2026-11-09 (ADR-0011, ADR-0015). The first scan found fixable high vulnerabilities in the signing tools (cryptography 44.0.2, cbor2 5.6.5; build-time only, not in the firmware): updated to 50.0.2 and 5.9.0 |
-| B–F | Not started |
+| B | Draft ADR-0016 (proposed); EVK spikes S1–S6 pending |
+| C–F | Not started |
