@@ -2,7 +2,7 @@
 #   .venv/Scripts/python -m pip install -r requirements-dev.txt   (Windows)
 #   .venv/bin/python -m pip install -r requirements-dev.txt       (Linux/macOS)
 # Not needed by CI or by the embedded build.
-clang-format==20.1.8
+clang-format==23.1.5
 # Host C compiler (zig cc) for machines without gcc/clang; used by scripts/host_tests.py.
 ziglang==0.17.1
-ninja==1.13.0
+ninja==1.13.2
