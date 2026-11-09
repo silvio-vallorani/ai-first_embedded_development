@@ -1,12 +1,12 @@
-# Dual-core LED toggle (MIMXRT1180-EVK / MIMXRT1189)
+# Dual-core LED toggle (AM254-5 / MIMXRT1180-EVK, MIMXRT1189)
 
 ## Behaviour
 
 - CM33 is the primary core.
 - CM33 starts CM7 and waits for the CM7-ready event.
 - Once per second CM33 sends `APP_EVENT_TOGGLE_LED` using NXP MCMGR.
-- CM7 receives the event, records a pending request, and toggles the EVK green user LED from its main loop.
-- The LED is connected to GPIO_AD_27 / GPIO4_IO27 on the MIMXRT1180-EVK.
+- CM7 receives the event, records a pending request, and toggles the board user LED from its main loop.
+- The LED comes from `boards/<board>/include/aied_board.h`: DL1 (green, GPIO_EMC_B1_41 / GPIO3_IO09) on the AM254-5, the green user LED (GPIO_AD_27 / GPIO4_IO27) on the MIMXRT1180-EVK. Select the board with `--board am254-5` (`-Board am254-5`); the default is the EVK.
 
 The application uses no RTOS. MCMGR is the inter-core event mechanism supplied by the MCUXpresso Multicore SDK.
 
@@ -61,8 +61,8 @@ Do not replace these values with addresses copied from another board, memory tar
 - CM33 initializes MCMGR and board hardware, registers its event handler, then starts CM7.
 - CM7 initializes board hardware and the LED GPIO, initializes MCMGR, registers its event handler, and then sends `APP_EVENT_CM7_READY`.
 - The MCMGR callback only sets a flag. GPIO access remains in the CM7 main loop.
-- The LED GPIO mux and GPIO4 clock are configured by the CM7 application after board initialization.
-- CI compilation validates both core images and SysBuild packaging. Physical LED behaviour still requires an EVK test.
+- The LED pad is muxed by the board's `BOARD_InitPins()` (SDK pin mux on the EVK, `boards/am254-5/sdk/cm7/pin_mux.c` on the AM254-5); the CM7 application then configures the GPIO.
+- CI compilation validates both core images and SysBuild packaging. Physical LED behaviour still requires a test on the board.
 
 ## NXP references
 

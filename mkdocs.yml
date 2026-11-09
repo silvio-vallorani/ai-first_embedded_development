@@ -12,6 +12,8 @@ nav:
       - Firmware update: architecture/FIRMWARE_UPDATE.md
       - Decisions: architecture/decisions/README.md
       - Wiki publishing: architecture/WIKI_PUBLISHING.md
+  - Boards:
+      - AM254-5 custom board: boards/AM254-5.md
   - Engineering:
       - Unit testing: engineering/UNIT_TESTING.md
       - MCUboot update test: engineering/MCUBOOT_UPDATE_TEST.md

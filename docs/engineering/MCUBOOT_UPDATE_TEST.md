@@ -1,6 +1,6 @@
-# MCUboot update test (MIMXRT1180-EVK, phase 1)
+# MCUboot update test (phase 1)
 
-This procedure validates the phase-1 MCUboot integration (ADR-0014) on the EVK: MCUboot boots the dual-core LED application, updates it, confirms it, and reverts an unconfirmed image. The LED toggle period tells the images apart.
+This procedure validates the phase-1 MCUboot integration (ADR-0014) on the AM254-5 custom board (the target board) or the MIMXRT1180-EVK: MCUboot boots the dual-core LED application, updates it, confirms it, and reverts an unconfirmed image. The LED toggle period tells the images apart.
 
 | Image | Version | LED toggles every | Confirms itself | Programmed into |
 |---|---|---:|---|---|
@@ -8,9 +8,15 @@ This procedure validates the phase-1 MCUboot integration (ADR-0014) on the EVK: 
 | v2 | 2.0.0 | 250 ms | yes | secondary slot 0x28240000 (test update) |
 | v3 | 3.0.0 | 100 ms | **no** | secondary slot 0x28240000 (rollback test) |
 
+## Board selection
+
+Every command below takes `--board am254-5` before the subcommand (default: `mimxrt1180_evk`), for example `rt1180_mcuboot.py --board am254-5 flash initial`. The output directory is then `build/am254-5-update-test/` and the CI artifact `am254-5-mcuboot-update-test`. The LED is the board user LED: DL1 (green) on the AM254-5, the green user LED on the EVK. The bootloader and the flash layout are the same on both boards.
+
 ## Prerequisites
 
-- MIMXRT1180-EVK connected through the on-board MCU-Link USB port, boot configuration as delivered (FlexSPI NOR boot), lifecycle OEM Open.
+- **AM254-5:** SWD probe (for example MCU-Link) on the Tag-Connect J1. The console UART (LPUART1, 3.3 V) is on J1 pin 8 (MCU TX) and pin 7 (MCU RX); use the probe VCOM if it carries these pins, otherwise a 3.3-V USB-UART. DIP switch SW1 set to boot from FlexSPI NOR (check the setting against `docs/boards/AM254-5.md`), lifecycle OEM Open.
+- **EVK:** connected through the on-board MCU-Link USB port, boot configuration as delivered (FlexSPI NOR boot), lifecycle OEM Open.
+- LinkServer uses the EVK device configuration for both boards (same NOR on FlexSPI1 port A); set `LINKSERVER_DEVICE` to override it.
 - NXP LinkServer installed (found automatically in `C:\nxp\LinkServer_*`, on `PATH`, or through `LINKSERVER`).
 - Serial terminal on the MCU-Link VCOM port: 115200 baud, 8N1, no flow control.
 - SDK setup completed (`scripts/setup_sdk.*`), `ARMGCC_DIR` set, `cmake` and `ninja` on `PATH`.

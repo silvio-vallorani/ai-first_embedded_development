@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 # Build the CM33 + CM7 LED-toggle application through the NXP SysBuild template.
 #
-# Usage: build_rt1180.sh [--mcuboot] [--version X.Y.Z] [--toggle-period-us N] [--no-confirm]
+# Usage: build_rt1180.sh [--board NAME] [--mcuboot] [--version X.Y.Z] [--toggle-period-us N] [--no-confirm]
+#   --board NAME         Board under boards/: mimxrt1180_evk (default) or am254-5.
 #   --mcuboot            Link for the MCUboot primary slot (ADR-0014) instead of direct ROM boot.
 #   --version X.Y.Z      Version printed by the application (use the signed image version).
 #   --toggle-period-us N LED toggle period in microseconds.
 #   --no-confirm         MCUboot variant only: never confirm a test image (rollback test).
 set -euo pipefail
 
+BOARD="mimxrt1180_evk"
 VARIANT="standalone"
 APP_VERSION=""
 TOGGLE_PERIOD_US=""
 NO_CONFIRM=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --board) BOARD="${2:?--board needs a value}"; shift ;;
         --mcuboot) VARIANT="mcuboot" ;;
         --version) APP_VERSION="${2:?--version needs a value}"; shift ;;
         --toggle-period-us) TOGGLE_PERIOD_US="${2:?--toggle-period-us needs a value}"; shift ;;
@@ -42,10 +45,18 @@ SDK_EXAMPLES="${SDK_ROOT}/mcuxsdk/examples/multicore_examples"
 TEMPLATE="${SDK_EXAMPLES}/hello_world"
 OVERLAY="${SDK_EXAMPLES}/aied_dual_core_led_toggle"
 EXAMPLE_DIR="${PROJECT_ROOT}/examples/dual_core_led_toggle"
+BOARD_DIR="${PROJECT_ROOT}/boards/${BOARD}"
+if [[ ! -f "${BOARD_DIR}/include/aied_board.h" ]]; then
+    echo "Error: unknown board ${BOARD} (expected boards/<name>/include/aied_board.h)." >&2
+    exit 2
+fi
+# Short build-directory prefix per board (Windows path-length limit, see the rt1180-build skill).
+BUILD_PREFIX="rt1180"
+[[ "${BOARD}" == "mimxrt1180_evk" ]] || BUILD_PREFIX="${BOARD}"
 if [[ "${VARIANT}" == "mcuboot" ]]; then
-    BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/rt1180-led-mcuboot}"
+    BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/${BUILD_PREFIX}-led-mcuboot}"
 else
-    BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/rt1180-led-toggle}"
+    BUILD_DIR="${RT1180_BUILD_DIR:-${PROJECT_ROOT}/build/${BUILD_PREFIX}-led-toggle}"
 fi
 VENV_DIR="${PROJECT_ROOT}/.venv"
 WEST_BIN="${VENV_DIR}/bin/west"
@@ -94,6 +105,20 @@ cp "${EXAMPLE_DIR}/cm33/main.c" "${OVERLAY}/primary/main.c"
 cp "${EXAMPLE_DIR}/cm7/main.c" "${OVERLAY}/secondary/main.c"
 cp "${EXAMPLE_DIR}/common/app_events.h" "${OVERLAY}/primary/app_events.h"
 cp "${EXAMPLE_DIR}/common/app_events.h" "${OVERLAY}/secondary/app_events.h"
+cp "${BOARD_DIR}/include/aied_board.h" "${OVERLAY}/primary/aied_board.h"
+cp "${BOARD_DIR}/include/aied_board.h" "${OVERLAY}/secondary/aied_board.h"
+# A board without an SDK board port of its own replaces the EVK pin_mux of each image it provides.
+for image in primary:cm33 secondary:cm7; do
+    if [[ -f "${BOARD_DIR}/sdk/${image#*:}/pin_mux.c" ]]; then
+        cp "${BOARD_DIR}/sdk/${image#*:}/pin_mux.c" "${BOARD_DIR}/sdk/${image#*:}/pin_mux.h" "${OVERLAY}/${image%%:*}/"
+        # CUSTOM_PRJ_CONF_PATHS is merged after the SDK board-category prj.conf, which selects the EVK pin_mux.
+        printf 'CONFIG_MCUX_PRJSEG_module.board.pinmux_customize_folder=y\n' > "${OVERLAY}/${image%%:*}/board_pinmux.conf"
+        perl -0pi -e 's/^(project\()/set(CUSTOM_PRJ_CONF_PATHS \$\{CMAKE_CURRENT_LIST_DIR\}\/board_pinmux.conf)\n$1/m' \
+            "${OVERLAY}/${image%%:*}/CMakeLists.txt"
+        grep -q '^set(CUSTOM_PRJ_CONF_PATHS' "${OVERLAY}/${image%%:*}/CMakeLists.txt"
+        printf '\nmcux_add_source(\n    SOURCES pin_mux.c pin_mux.h\n)\n' >> "${OVERLAY}/${image%%:*}/CMakeLists.txt"
+    fi
+done
 
 test -f "${OVERLAY}/primary/sysbuild.cmake"
 test -f "${OVERLAY}/secondary/CMakeLists.txt"
@@ -145,4 +170,4 @@ fi
         -d "${BUILD_DIR}"
 )
 
-echo "Build completed (${VARIANT}): ${BUILD_DIR}"
+echo "Build completed (${BOARD}, ${VARIANT}): ${BUILD_DIR}"

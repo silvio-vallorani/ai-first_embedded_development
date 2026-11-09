@@ -1,22 +1,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "aied_board.h"
 #include "app_events.h"
 #include "app.h"
 #include "board.h"
 #include "fsl_common.h"
 #include "fsl_rgpio.h"
-#include "fsl_iomuxc.h"
 #include "mcmgr.h"
 
-#define APP_LED_GPIO     RGPIO4
-#define APP_LED_GPIO_PIN (27U)
-#define APP_LED_MASK     (1UL << APP_LED_GPIO_PIN)
+#define APP_LED_MASK (1UL << AIED_BOARD_LED_PIN)
 
 static volatile bool s_toggle_requested = false;
 
 /**
- * @brief Configure the EVK green user LED on GPIO_AD_27 / GPIO4_IO27.
+ * @brief Configure the board user LED (aied_board.h); BOARD_InitPins() has already muxed the pin.
  */
 static void app_led_init(void)
 {
@@ -25,8 +23,7 @@ static void app_led_init(void)
         .outputLogic = 1U,
     };
 
-    IOMUXC_SetPinMux(IOMUXC_GPIO_AD_27_GPIO4_IO27, 0U);
-    RGPIO_PinInit(APP_LED_GPIO, APP_LED_GPIO_PIN, &ledConfig);
+    RGPIO_PinInit(AIED_BOARD_LED_GPIO, AIED_BOARD_LED_PIN, &ledConfig);
 }
 
 /**
@@ -70,7 +67,7 @@ int main(void)
     for (;;) {
         if (s_toggle_requested) {
             s_toggle_requested = false;
-            RGPIO_PortToggle(APP_LED_GPIO, APP_LED_MASK);
+            RGPIO_PortToggle(AIED_BOARD_LED_GPIO, APP_LED_MASK);
         }
     }
 }

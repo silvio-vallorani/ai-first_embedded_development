@@ -1,6 +1,8 @@
 <#
 .SYNOPSIS
 Build the CM33 + CM7 LED-toggle application through the NXP SysBuild template.
+.PARAMETER Board
+Board under boards/: mimxrt1180_evk (default) or am254-5.
 .PARAMETER McuBoot
 Link for the MCUboot primary slot (ADR-0014) instead of direct ROM boot.
 .PARAMETER Version
@@ -11,6 +13,7 @@ LED toggle period in microseconds.
 MCUboot variant only: never confirm a test image (rollback test).
 #>
 param(
+    [string]$Board = "mimxrt1180_evk",
     [switch]$McuBoot,
     [ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
     [ValidateRange(1, [uint32]::MaxValue)][uint32]$TogglePeriodUs,
@@ -25,8 +28,14 @@ $SdkExamples = Join-Path $SdkRoot "mcuxsdk/examples/multicore_examples"
 $Template = Join-Path $SdkExamples "hello_world"
 $Overlay = Join-Path $SdkExamples "aied_dual_core_led_toggle"
 $ExampleDir = Join-Path $ProjectRoot "examples/dual_core_led_toggle"
+$BoardDir = Join-Path $ProjectRoot "boards/$Board"
+if (-not (Test-Path (Join-Path $BoardDir "include/aied_board.h"))) {
+    throw "Unknown board $Board (expected boards/<name>/include/aied_board.h)."
+}
 $Variant = if ($McuBoot) { "mcuboot" } else { "standalone" }
-$DefaultBuildDir = if ($McuBoot) { "build/rt1180-led-mcuboot" } else { "build/rt1180-led-toggle" }
+# Short build-directory prefix per board (Windows path-length limit, see the rt1180-build skill).
+$BuildPrefix = if ($Board -eq "mimxrt1180_evk") { "rt1180" } else { $Board }
+$DefaultBuildDir = if ($McuBoot) { "build/$BuildPrefix-led-mcuboot" } else { "build/$BuildPrefix-led-toggle" }
 $BuildDir = if ($env:RT1180_BUILD_DIR) { $env:RT1180_BUILD_DIR } else { Join-Path $ProjectRoot $DefaultBuildDir }
 $VenvDir = Join-Path $ProjectRoot ".venv"
 $West = Join-Path $VenvDir "Scripts/west.exe"
@@ -69,6 +78,23 @@ Copy-Item (Join-Path $ExampleDir "cm33/main.c") (Join-Path $Overlay "primary/mai
 Copy-Item (Join-Path $ExampleDir "cm7/main.c") (Join-Path $Overlay "secondary/main.c") -Force
 Copy-Item (Join-Path $ExampleDir "common/app_events.h") (Join-Path $Overlay "primary/app_events.h") -Force
 Copy-Item (Join-Path $ExampleDir "common/app_events.h") (Join-Path $Overlay "secondary/app_events.h") -Force
+Copy-Item (Join-Path $BoardDir "include/aied_board.h") (Join-Path $Overlay "primary/aied_board.h") -Force
+Copy-Item (Join-Path $BoardDir "include/aied_board.h") (Join-Path $Overlay "secondary/aied_board.h") -Force
+# A board without an SDK board port of its own replaces the EVK pin_mux of each image it provides.
+foreach ($Image in @(@("primary", "cm33"), @("secondary", "cm7"))) {
+    $PinMux = Join-Path $BoardDir "sdk/$($Image[1])"
+    if (Test-Path (Join-Path $PinMux "pin_mux.c")) {
+        $ImageDir = Join-Path $Overlay $Image[0]
+        Copy-Item (Join-Path $PinMux "pin_mux.c"), (Join-Path $PinMux "pin_mux.h") $ImageDir -Force
+        # CUSTOM_PRJ_CONF_PATHS is merged after the SDK board-category prj.conf, which selects the EVK pin_mux.
+        [System.IO.File]::WriteAllText((Join-Path $ImageDir "board_pinmux.conf"), "CONFIG_MCUX_PRJSEG_module.board.pinmux_customize_folder=y`n")
+        $ImageCMake = Join-Path $ImageDir "CMakeLists.txt"
+        $Text = [System.IO.File]::ReadAllText($ImageCMake)
+        $Patched = [regex]::new('(?m)^(project\()').Replace($Text, "set(CUSTOM_PRJ_CONF_PATHS `${CMAKE_CURRENT_LIST_DIR}/board_pinmux.conf)`n`$1", 1)
+        if ($Patched -eq $Text) { throw "Cannot select the board pin_mux in $ImageCMake." }
+        [System.IO.File]::WriteAllText($ImageCMake, $Patched + "`nmcux_add_source(`n    SOURCES pin_mux.c pin_mux.h`n)`n")
+    }
+}
 
 if (-not (Test-Path (Join-Path $Overlay "primary/sysbuild.cmake")) -or -not (Test-Path (Join-Path $Overlay "secondary/CMakeLists.txt"))) {
     throw "The copied NXP SysBuild template is incomplete."
@@ -123,4 +149,4 @@ finally {
     Pop-Location
 }
 
-Write-Host "Build completed ($Variant): $BuildDir"
+Write-Host "Build completed ($Board, $Variant): $BuildDir"
