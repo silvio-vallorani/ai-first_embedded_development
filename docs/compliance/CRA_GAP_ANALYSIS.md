@@ -67,5 +67,5 @@ UART/xmodem transport, then network, with secure distribution of updates (Annex 
 
 | Phase | Status |
 |---|---|
-| A | Implemented 2026-11-09 (ADR-0011, ADR-0015); first CI scan results in the `rt1180-sbom` artifact |
+| A | Implemented 2026-11-09 (ADR-0011, ADR-0015). The first scan found fixable high vulnerabilities in the signing tools (cryptography 44.0.2, cbor2 5.6.5; build-time only, not in the firmware): updated to 50.0.2 and 5.9.0 |
 | B–F | Not started |
