@@ -121,6 +121,25 @@ int aied_log_fs_littlefs_mount(aied_log_fs_littlefs_t *fs, const struct lfs_conf
     return result;
 }
 
+int aied_log_fs_littlefs_wipe(aied_log_fs_littlefs_t *fs)
+{
+    int result = 0;
+
+    (void)lfs_unmount(&fs->lfs);
+    /* Erase every block: lfs_format alone leaves old file data readable in unused blocks. */
+    for (lfs_block_t block = 0U; (block < fs->config.block_count) && (result == 0); block++) {
+        result = fs->config.erase(&fs->config, block);
+    }
+    if (result == 0) {
+        result = lfs_format(&fs->lfs, &fs->config);
+    }
+    if (result == 0) {
+        fs->formatted = true;
+        result = lfs_mount(&fs->lfs, &fs->config);
+    }
+    return result;
+}
+
 aied_log_fs_t aied_log_fs_littlefs_interface(aied_log_fs_littlefs_t *fs)
 {
     const aied_log_fs_t interface = {.list = fs_list,

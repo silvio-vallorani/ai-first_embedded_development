@@ -13,8 +13,9 @@
 
 LOG_MODULE_REGISTER(log, LOG_LEVEL_INF);
 
-#define LOGDUMP_COMMAND "logdump"
-#define COMMAND_MAX     16U
+#define LOGDUMP_COMMAND  "logdump"
+#define LOGERASE_COMMAND "logerase"
+#define COMMAND_MAX      16U
 
 static uint64_t s_cycles;
 static uint32_t s_last_cycles;
@@ -25,8 +26,10 @@ static aied_log_fs_t s_fs;
 static aied_log_file_t s_file;
 static bool s_persistent;
 
+#if AIED_LOG_PORT_COMMANDS
 static char s_command[COMMAND_MAX];
 static size_t s_command_length;
+#endif
 
 static uint32_t irq_lock(void)
 {
@@ -84,6 +87,7 @@ static void console_write(void *context, const char *line, size_t length)
     console_put(line, length);
 }
 
+#if AIED_LOG_PORT_COMMANDS
 static void dump_begin(void *context, const char *name, uint32_t size)
 {
     (void)context;
@@ -111,9 +115,40 @@ static void dump_logs(void)
         (void)PRINTF("=== AIED LOG DUMP UNAVAILABLE ===\r\n");
         return;
     }
+    LOG_SEC_INF("log dump requested over UART");
     (void)aied_log_process();
     (void)PRINTF("=== AIED LOG DUMP BEGIN boot %u ===\r\n", (unsigned)aied_log_file_boot_count(&s_file));
     (void)PRINTF("=== AIED LOG DUMP %s ===\r\n", aied_log_file_dump(&s_file, &sink) ? "END" : "INCOMPLETE");
+}
+
+/* Secure erasure of all stored records (CRA Annex I: removal of data); the boot counter restarts. */
+static void erase_logs(void)
+{
+    if (!s_persistent) {
+        (void)PRINTF("=== AIED LOG ERASE UNAVAILABLE ===\r\n");
+        return;
+    }
+    (void)aied_log_process(); /* nothing buffered may land in the new file system */
+    s_persistent = (aied_log_fs_littlefs_wipe(&s_littlefs) == 0) &&
+                   aied_log_file_init(&s_file, &s_fs, AIED_LOG_PORT_FILE_SIZE, AIED_LOG_PORT_FILES);
+    if (s_persistent) {
+        LOG_SEC_WRN("log storage erased on request over UART");
+    } else {
+        LOG_SEC_ERR("log storage erase FAILED, persistent logging stopped");
+    }
+    (void)aied_log_process();
+    (void)PRINTF("=== AIED LOG ERASE %s ===\r\n", s_persistent ? "DONE" : "FAILED");
+}
+
+static void run_command(void)
+{
+    if ((s_command_length == (sizeof(LOGDUMP_COMMAND) - 1U)) &&
+        (memcmp(s_command, LOGDUMP_COMMAND, s_command_length) == 0)) {
+        dump_logs();
+    } else if ((s_command_length == (sizeof(LOGERASE_COMMAND) - 1U)) &&
+               (memcmp(s_command, LOGERASE_COMMAND, s_command_length) == 0)) {
+        erase_logs();
+    }
 }
 
 static void poll_command(void)
@@ -128,16 +163,14 @@ static void poll_command(void)
         const char c = (char)LPUART_ReadByte(uart);
 
         if ((c == '\r') || (c == '\n')) {
-            if ((s_command_length == (sizeof(LOGDUMP_COMMAND) - 1U)) &&
-                (memcmp(s_command, LOGDUMP_COMMAND, s_command_length) == 0)) {
-                dump_logs();
-            }
+            run_command();
             s_command_length = 0U;
         } else if (s_command_length < COMMAND_MAX) {
             s_command[s_command_length++] = c;
         }
     }
 }
+#endif
 
 bool aied_log_port_init(const char *firmware_version)
 {
@@ -174,5 +207,7 @@ bool aied_log_port_init(const char *firmware_version)
 void aied_log_port_poll(void)
 {
     (void)aied_log_process();
+#if AIED_LOG_PORT_COMMANDS
     poll_command();
+#endif
 }

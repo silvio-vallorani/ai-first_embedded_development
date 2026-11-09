@@ -6,6 +6,7 @@ Run with the project virtual environment, for example:
     .venv/Scripts/python scripts/rt1180_mcuboot.py build      (Windows)
     .venv/bin/python scripts/rt1180_mcuboot.py build          (Linux/macOS)
     .venv/Scripts/python scripts/rt1180_mcuboot.py flash initial
+    .venv/Scripts/python scripts/rt1180_mcuboot.py check-release <image.bin>   (release guard, ADR-0011)
 
 The update-test procedure is described in docs/engineering/MCUBOOT_UPDATE_TEST.md.
 """
@@ -167,6 +168,27 @@ def command_build(_: argparse.Namespace) -> None:
     print("\n".join(lines))
 
 
+def command_check_release(args: argparse.Namespace) -> None:
+    """Reject release candidates that NXP's public development key validates (ADR-0011)."""
+    require(IMGTOOL, "Run scripts/setup_sdk first.")
+    rejected = 0
+    for path in args.images:
+        result = subprocess.run([sys.executable, str(IMGTOOL), "verify", "--key", str(SIGNING_KEY), str(path)],
+                                capture_output=True, text=True)
+        output = (result.stdout + result.stderr).strip()
+        if result.returncode == 0:
+            reason = "signed with the public NXP development key"
+        elif "No signature found for the given key" not in output:
+            reason = "not a valid signed MCUboot image: " + (output.splitlines() or ["no output"])[-1]
+        else:
+            print(f"ok        {path}: not signed with the development key")
+            continue
+        print(f"REJECTED  {path}: {reason}")
+        rejected += 1
+    if rejected:
+        sys.exit(f"{rejected} image(s) rejected as release candidates.")
+
+
 def linkserver() -> str:
     """Locate LinkServer: LINKSERVER env, PATH, then the default NXP install folders."""
     candidates = [os.environ.get("LINKSERVER", ""), shutil.which("LinkServer") or ""]
@@ -211,6 +233,9 @@ def main() -> None:
     )
     flash.add_argument("--probe", help="LinkServer probe serial or #index when several are connected")
     flash.set_defaults(func=command_flash)
+    check = sub.add_parser("check-release", help="fail if an image is signed with the public development key")
+    check.add_argument("images", nargs="+", type=Path)
+    check.set_defaults(func=command_check_release)
     args = parser.parse_args()
     args.func(args)
 

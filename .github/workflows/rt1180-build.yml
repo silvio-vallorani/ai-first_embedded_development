@@ -25,6 +25,9 @@ on:
       - 'CMakePresets.json'
       - 'README.md'
   workflow_dispatch:
+  schedule:
+    # Weekly rebuild: the vulnerability scan picks up newly published advisories.
+    - cron: '0 5 * * 1'
 
 permissions:
   contents: read
@@ -34,16 +37,20 @@ jobs:
     name: Build NXP RT1180-EVK multicore baseline
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write      # build provenance attestation
+      attestations: write
     env:
       BOARD: evkmimxrt1180
       ARMGCC_DIR: ${{ github.workspace }}/toolchains/arm-gnu-toolchain-14.2.rel1
       MCUXPRESSO_SDK: ${{ github.workspace }}/mcuxpresso-sdk
     steps:
       - name: Checkout project
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12'
 
@@ -101,7 +108,7 @@ jobs:
 
       - name: Upload generated firmware artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rt1180-sdk-26.09.00-firmware
           path: |
@@ -120,9 +127,69 @@ jobs:
         run: .venv/bin/python scripts/rt1180_mcuboot.py build
 
       - name: Upload MCUboot update-test images
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rt1180-mcuboot-update-test
           path: build/rt1180-update-test/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Release guard rejects development-key images and accepts other keys
+        run: |
+          py=.venv/bin/python
+          imgtool="${MCUXPRESSO_SDK}/mcuxsdk/middleware/mcuboot_opensource/scripts/imgtool.py"
+          if "$py" scripts/rt1180_mcuboot.py check-release build/rt1180-update-test/led-toggle-1.0.0.signed.bin; then
+            echo "::error::An image signed with the public NXP development key passed the release guard."
+            exit 1
+          fi
+          tmp="$(mktemp -d)"
+          "$py" "$imgtool" keygen -k "$tmp/key.pem" -t ecdsa-p256
+          "$py" "$imgtool" sign --key "$tmp/key.pem" --align 4 --version 1.0.0 --slot-size 0x200000             --header-size 0x400 --pad-header build/rt1180-ut-v1/primary/led_toggle_primary_core_cm33.bin "$tmp/image.bin"
+          "$py" scripts/rt1180_mcuboot.py check-release "$tmp/image.bin"
+          rm -rf "$tmp"
+
+      - name: Generate and validate the firmware SBOM (SPDX 2.3)
+        run: |
+          .venv/bin/python scripts/generate_sbom.py
+          pipx run --spec spdx-tools==0.8.5 pyspdxtools -i build/sbom/aied-rt1180-firmware.spdx.json
+
+      - name: Scan the SBOM for known vulnerabilities
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          sbom: build/sbom/aied-rt1180-firmware.spdx.json
+          grype-version: v0.121.0
+          # Fail on high or critical findings that have a fix; everything else is reported.
+          severity-cutoff: high
+          only-fixed: true
+          fail-build: true
+          output-format: table
+          output-file: build/sbom/vulnerabilities.txt
+
+      - name: Publish the vulnerability report in the job summary
+        if: always()
+        run: |
+          {
+            echo '### Vulnerability scan (grype, fixable high/critical fail the build)'
+            echo '```'
+            cat build/sbom/vulnerabilities.txt 2>/dev/null || echo 'No report produced.'
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload SBOM and vulnerability report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rt1180-sbom
+          path: build/sbom/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Attest build provenance
+        # Forked pull requests get no id-token permission.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            build/rt1180-update-test/*.bin
+            build/rt1180-update-test/mcuboot_opensource_cm33.elf
+            build/sbom/aied-rt1180-firmware.spdx.json

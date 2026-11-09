@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   host-tests:
     name: Host tests (${{ matrix.compiler }})
@@ -15,7 +18,7 @@ jobs:
     env:
       CC: ${{ matrix.compiler }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build ${{ matrix.compiler }}
       - name: Configure
@@ -29,30 +32,51 @@ jobs:
     name: C formatting (clang-format)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Install clang-format (same version as requirements-dev.txt)
         run: pipx install clang-format==20.1.8
       - name: Check formatting
         run: git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror --style=file
 
-  log-tools:
-    name: Log retrieval tool self-test
+  python-tools:
+    name: Python tool self-tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12'
       - name: Install tool dependencies
         run: python -m pip install littlefs-python==0.19.0 pyserial==3.5
-      - name: Self-test
+      - name: Log retrieval tool
         run: python scripts/rt1180_logs.py selftest
+      - name: SBOM generator
+        run: python scripts/generate_sbom.py selftest
+
+  secrets:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      # The binary is installed directly: gitleaks-action downloads from a legacy URL that fails intermittently.
+      - name: Install gitleaks 8.30.1 (checksum verified)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v8.30.1 -R gitleaks/gitleaks -D /tmp/gitleaks             -p gitleaks_8.30.1_linux_x64.tar.gz -p gitleaks_8.30.1_checksums.txt
+          cd /tmp/gitleaks
+          grep ' gitleaks_8.30.1_linux_x64.tar.gz$' gitleaks_8.30.1_checksums.txt | sha256sum --check -
+          tar -xzf gitleaks_8.30.1_linux_x64.tar.gz gitleaks
+      - name: Scan the whole history for secrets
+        run: /tmp/gitleaks/gitleaks git --redact --verbose --exit-code 1 .
 
   coverage:
     name: Host test coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Install build tools
         run: |
           sudo apt-get update && sudo apt-get install -y cmake ninja-build gcc
@@ -68,7 +92,7 @@ jobs:
             --txt --cobertura build/coverage/coverage.xml \
             --html-details build/coverage/coverage.html
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: host-coverage
           path: |

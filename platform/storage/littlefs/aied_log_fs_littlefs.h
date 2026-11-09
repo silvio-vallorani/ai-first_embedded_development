@@ -37,6 +37,13 @@ typedef struct {
 int aied_log_fs_littlefs_mount(aied_log_fs_littlefs_t *fs, const struct lfs_config *base);
 
 /**
+ * @brief Securely erase the log region: erase every block, then format and mount an empty file system.
+ * @param fs Mounted instance.
+ * @return 0 on success, a negative littlefs or block-device error otherwise.
+ */
+int aied_log_fs_littlefs_wipe(aied_log_fs_littlefs_t *fs);
+
+/**
  * @brief Build the log file system interface bound to a mounted instance.
  * @param fs Mounted instance.
  * @return Interface.

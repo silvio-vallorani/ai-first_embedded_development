@@ -19,6 +19,7 @@ LOG_DBG("not stored: below this module's level");
 - A record is kept when its level is at or below both the module level and `AIED_LOG_MAX_LEVEL` (default `LOG_LEVEL_DBG`). Lower `AIED_LOG_MAX_LEVEL` at build time and the compiler removes the more verbose calls.
 - Do not end messages with `\n`: the service always ends each record with exactly one newline. Line breaks inside a message become spaces.
 - Do not log from interrupts with high timing requirements: the console backend writes to the UART synchronously. Flash writes never happen in the logging call.
+- Security-relevant events (image state and confirmation, log access, anything touching keys or the update path) use `LOG_SEC_ERR/WRN/INF` instead: they are recorded in the shared `sec` module whatever file they come from, so `grep "> sec:"` finds them all.
 - Do not include the NXP `fsl_component_log.h` in the same file: it defines the same `LOG_*` macros, and `aied_log.h` stops the build if both are present.
 
 ## Record format
@@ -65,6 +66,14 @@ py -3.14 scripts/rt1180_logs.py flash
 
 Both commands write the files unchanged into `build/logs/<method>-<date-time>/`.
 
+## Erasing the logs
+
+Type `logerase` and press Enter in a serial terminal. The firmware erases every block of the log region (not only the file-system metadata), formats it and answers `=== AIED LOG ERASE DONE ===`. The boot counter restarts at 1; the first record is `<wrn> sec: log storage erased on request over UART`.
+
+## Release builds
+
+`logdump` and `logerase` are unauthenticated. Build release images with `AIED_LOG_PORT_COMMANDS=0` (for example `mcux_add_macro(CC "-DAIED_LOG_PORT_COMMANDS=0")`), which removes both commands; the debugger retrieval keeps working.
+
 ## Porting
 
-`platform/log/mcux/aied_log_port.c` connects the service to the MCUXpresso SDK: time source (DWT cycle counter + SysTick), console (`PUTCHAR`), littlefs mount and the `logdump` command. `platform/storage/littlefs` implements the file-system interface used by the file backend. The core (`firmware/services/log`) has no hardware dependency and is unit-tested on the host.
+`platform/log/mcux/aied_log_port.c` connects the service to the MCUXpresso SDK: time source (DWT cycle counter + SysTick), console (`PUTCHAR`), littlefs mount and the `logdump`/`logerase` commands. `platform/storage/littlefs` implements the file-system interface used by the file backend. The core (`firmware/services/log`) has no hardware dependency and is unit-tested on the host.
