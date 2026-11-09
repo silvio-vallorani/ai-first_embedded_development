@@ -150,6 +150,21 @@ size_t aied_log_format_line(char *buffer, uint64_t timestamp_us, const char *mod
 #define LOG_INF(...) AIED_LOG_(LOG_LEVEL_INF, __VA_ARGS__)
 #define LOG_DBG(...) AIED_LOG_(LOG_LEVEL_DBG, __VA_ARGS__)
 
+/** @brief Shared "sec" module for security events (image state, update, log access), INF level. */
+extern const aied_log_module_t aied_log_security;
+
+#define AIED_LOG_SEC_(lvl, ...)                                                                                        \
+    do {                                                                                                               \
+        if ((lvl) <= AIED_LOG_MAX_LEVEL) {                                                                             \
+            aied_log_write(&aied_log_security, (lvl), __VA_ARGS__);                                                    \
+        }                                                                                                              \
+    } while (0)
+
+/** @brief Security event records, from any module; filter on "<lvl> sec:" (CRA Annex I monitoring). */
+#define LOG_SEC_ERR(...) AIED_LOG_SEC_(LOG_LEVEL_ERR, __VA_ARGS__)
+#define LOG_SEC_WRN(...) AIED_LOG_SEC_(LOG_LEVEL_WRN, __VA_ARGS__)
+#define LOG_SEC_INF(...) AIED_LOG_SEC_(LOG_LEVEL_INF, __VA_ARGS__)
+
 #ifdef __cplusplus
 }
 #endif

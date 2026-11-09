@@ -1,0 +1,18 @@
+# Security and version updates for the pinned build dependencies (ADR-0011).
+# The MCUXpresso SDK and the Arm toolchain are pinned elsewhere (ADR-0010) and updated by hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        patterns: ["*"]

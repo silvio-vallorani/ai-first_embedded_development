@@ -53,6 +53,10 @@ See [MCUXpresso SDK setup](docs/toolchains/MCUXPRESSO_SDK.md) for prerequisites,
 
 See [Architecture](docs/architecture/ARCHITECTURE.md), [Memory map](docs/architecture/MEMORY_MAP.md), [Boot flow](docs/architecture/BOOT_FLOW.md), [Firmware update](docs/architecture/FIRMWARE_UPDATE.md), and [Unit testing](docs/engineering/UNIT_TESTING.md).
 
+## Security and compliance
+
+The project is not yet CRA compliant; the gap analysis and the plan are in [CRA gap analysis](docs/compliance/CRA_GAP_ANALYSIS.md). Every RT1189 CI build produces an SPDX SBOM and a vulnerability report (`rt1180-sbom` artifact). Report vulnerabilities as described in [SECURITY.md](SECURITY.md). Licensed under [BSD-3-Clause](LICENSE); NXP SDK components keep their own licenses.
+
 ## Decision records
 
 Architectural decisions are maintained in `docs/architecture/decisions/`. An accepted ADR records a design decision, not proof of hardware validation.

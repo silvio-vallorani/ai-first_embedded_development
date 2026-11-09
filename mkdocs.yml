@@ -16,6 +16,11 @@ nav:
       - Unit testing: engineering/UNIT_TESTING.md
       - MCUboot update test: engineering/MCUBOOT_UPDATE_TEST.md
       - Logging: engineering/LOGGING.md
+  - Compliance:
+      - CRA gap analysis and plan: compliance/CRA_GAP_ANALYSIS.md
+      - Risk assessment: compliance/RISK_ASSESSMENT.md
+      - Vulnerability handling: compliance/VULNERABILITY_HANDLING.md
+      - Technical documentation (Annex VII): compliance/TECHNICAL_DOCUMENTATION.md
   - Toolchains:
       - MCUXpresso SDK: toolchains/MCUXPRESSO_SDK.md
   - API Reference: https://silvio-vallorani.github.io/ai-first_embedded_development/doxygen/

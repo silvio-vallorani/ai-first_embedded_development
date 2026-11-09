@@ -125,6 +125,16 @@ static int test_levels_are_filtered_per_module(void)
     return 0;
 }
 
+static int test_security_events_use_shared_module(void)
+{
+    TEST_ASSERT_EQ(0, setup(false));
+    LOG_SEC_WRN("image state %u", 2U);
+    LOG_SEC_INF("confirmed");
+    TEST_ASSERT_TRUE(strcmp(s_console.text, "[00:00:00.000,000] <wrn> sec: image state 2\n"
+                                            "[00:00:00.000,000] <inf> sec: confirmed\n") == 0);
+    return 0;
+}
+
 static int test_deferred_backend_receives_records_on_process(void)
 {
     TEST_ASSERT_EQ(0, setup(true));
@@ -191,6 +201,7 @@ int test_log(void)
     failures += test_line_format();
     failures += test_long_message_is_truncated_on_one_line();
     failures += test_levels_are_filtered_per_module();
+    failures += test_security_events_use_shared_module();
     failures += test_deferred_backend_receives_records_on_process();
     failures += test_full_buffer_drops_and_reports();
     failures += test_invalid_use_is_rejected();

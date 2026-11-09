@@ -16,6 +16,9 @@ The MCUXpresso SDK provides a log component (`components/log`). It does not prin
 - **Flash region**: QSPI offset 0x7E0000 (CPU 0x287E0000), 128 KiB = 32 blocks of 4 KiB. This is the "Persistent logs" region of the target `MEMORY_MAP.md`, so it stays valid in phase 2. In the phase-1 layout (ADR-0014) the region is outside MCUboot and both slots.
 - **Timestamp**: uptime since boot from the CM33 DWT cycle counter, extended to 64 bits by SysTick every 10 ms, so it stays correct while `mflash` keeps interrupts masked during erase or program. Every boot writes `<inf> log: boot N, firmware X.Y.Z`, with N persistent, so sessions can be told apart. A real-time clock can replace the time source later without changing the core.
 - **Retrieval**: the UART command `logdump` on the running firmware prints all files in framed form. The debugger path reads the region with LinkServer and extracts the files on the PC with littlefs-python (`scripts/rt1180_logs.py`), which works even when the firmware no longer runs.
+- **Security events** (2026-11-09, CRA plan phase A): image state, confirmation and log access are recorded through `LOG_SEC_ERR/WRN/INF` in a shared `sec` module, so they can be filtered as `<lvl> sec:` regardless of the calling file.
+- **Secure erasure** (2026-11-09): the UART command `logerase` erases every block of the log region, then formats it; `lfs_format` alone would leave old records readable in unused blocks. The boot counter restarts at 1 and the first record of the new file system is `<wrn> sec: log storage erased on request over UART`.
+- **Release builds**: `AIED_LOG_PORT_COMMANDS=0` removes both UART commands. They are unauthenticated, so release builds must disable them until service access is authenticated (CRA plan phase E); debugger retrieval keeps working.
 
 ## Consequences
 - Only CM33 writes the persistent log. CM7 has no logging yet; CM33 records the CM7 events it sees. Forwarding CM7 records needs an inter-core channel (rpmsg), which is a later step.
@@ -24,6 +27,7 @@ The MCUXpresso SDK provides a log component (`components/log`). It does not prin
 - At up to 64 KiB of text the region holds roughly the last 1000 records. littlefs needs the remaining space for copy-on-write.
 - `rt1180_mcuboot.py flash initial` erases the whole flash, logs included.
 - littlefs-python has no wheel for Python 3.15; debugger extraction needs Python 3.12–3.14.
+- With `AIED_LOG_PORT_COMMANDS=0` the end user has no way to erase the logs until an authenticated service interface exists; the CRA requirement to remove data then relies on the debugger or a factory reset (open in the CRA plan).
 
 ## Validation
-Host unit tests cover formatting, filtering, deferral, overflow, rotation, the boot counter, write failures and the dump. On the EVK: check boot records, log survival across reset and power cycle, rotation after more than 16 KiB, `logdump` over UART, debugger extraction, and log writes during an MCUboot update.
+Host unit tests cover formatting, filtering, deferral, overflow, rotation, the boot counter, write failures and the dump. On the EVK: check boot records, log survival across reset and power cycle, rotation after more than 16 KiB, `logdump` and `logerase` over UART (after `logerase`, a debugger dump of the region must show only the new file system), debugger extraction, and log writes during an MCUboot update.

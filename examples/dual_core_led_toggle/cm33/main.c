@@ -50,20 +50,20 @@ static void app_confirm_image(void)
     uint32_t state = kSwapType_None;
 
     if ((mflash_drv_init() != 0) || (bl_get_image_state(0U, &state) != kStatus_Success)) {
-        LOG_ERR("MCUboot: unable to read image state");
+        LOG_SEC_ERR("MCUboot: unable to read image state");
         return;
     }
 #if defined(AIED_SKIP_IMAGE_CONFIRM)
-    LOG_WRN("MCUboot: image state %u, confirmation disabled in this build", (unsigned)state);
+    LOG_SEC_WRN("MCUboot: image %s state %u, confirmation disabled in this build", APP_VERSION_STRING, (unsigned)state);
 #else
     if (state == kSwapType_Testing) {
         if (bl_update_image_state(0U, kSwapType_Permanent) == kStatus_Success) {
-            LOG_INF("MCUboot: test image confirmed (permanent)");
+            LOG_SEC_INF("MCUboot: test image %s confirmed (permanent)", APP_VERSION_STRING);
         } else {
-            LOG_ERR("MCUboot: image confirmation FAILED");
+            LOG_SEC_ERR("MCUboot: image %s confirmation FAILED", APP_VERSION_STRING);
         }
     } else {
-        LOG_INF("MCUboot: image state %u, nothing to confirm", (unsigned)state);
+        LOG_SEC_INF("MCUboot: image %s state %u, nothing to confirm", APP_VERSION_STRING, (unsigned)state);
     }
 #endif
 }

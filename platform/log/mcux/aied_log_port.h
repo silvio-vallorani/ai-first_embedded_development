@@ -28,6 +28,14 @@ extern "C" {
 #endif
 
 /**
+ * @brief 1: accept the unauthenticated `logdump` and `logerase` commands on the debug UART.
+ * Set to 0 in release builds until service access is authenticated (CRA plan, phase E).
+ */
+#ifndef AIED_LOG_PORT_COMMANDS
+#define AIED_LOG_PORT_COMMANDS 1
+#endif
+
+/**
  * @brief Start the time source, the console backend and, if the flash log region can be
  *        mounted, the persistent file backend.
  * @param firmware_version Version string written in the boot record.

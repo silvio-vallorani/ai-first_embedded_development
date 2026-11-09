@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+const aied_log_module_t aied_log_security = {"sec", LOG_LEVEL_INF};
+
 static const char *const s_level_tags[] = {"none", "err", "wrn", "inf", "dbg"};
 
 static const aied_log_config_t *s_config;

@@ -9,3 +9,8 @@ __pycache__/
 *.hex
 *.map
 .DS_Store
+# Private keys and certificates are never committed (ADR-0011).
+*.pem
+*.key
+*.p12
+*.pfx
