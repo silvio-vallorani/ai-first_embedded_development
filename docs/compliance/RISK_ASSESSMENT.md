@@ -19,8 +19,8 @@ CRA Art. 13(2) and Annex VII point 3. Initial version for the MIMXRT1189 dual-co
 |---|---|---|---|
 | T1 | Malicious image installed (attacker-signed) | Signature checked by MCUboot, but the key is NXP's **public** dev key: anyone can sign | Production keys in HSM, release guard (A, done), SRK fuses and signed boot container (E) |
 | T2 | Rollback to an old vulnerable version | Any signed version accepted | Hardware monotonic counter, MCUboot downgrade prevention (E) |
-| T3 | Firmware read out and reverse engineered | Plaintext in flash and in transit | Encrypted images with runtime decryption (B, then implementation) |
-| T4 | Debug port used to read or modify the device | Debug open (OEM Open) | Authenticated debug, OEM Closed lifecycle (E) |
+| T3 | Firmware read out and reverse engineered | Plaintext in flash and in transit | MCUboot-encrypted transport, OTFAD-encrypted executable slots with per-slot ELE-wrapped keys (B: ADR-0016) |
+| T4 | Debug port used to read or modify the device | Debug open (OEM Open) | OEM Closed lifecycle with ELE debug authentication: scoped, optionally device-bound credentials (E, ADR-0016) |
 | T5 | Compromised or faulty CM7 corrupts CM33, flash or peripherals | No TRDC policy | Per-core TRDC domains, locked before CM7 starts (C) |
 | T6 | Application bug exposes boot, keys or update state | Single CM33 world | TrustZone Secure/Non-Secure split (D) |
 | T7 | Bootloader corrupted (power loss, bad update) | Single MCUboot copy, no recovery | Recovery stage and redundant MCUboot (B layout, ADR-0007) |
