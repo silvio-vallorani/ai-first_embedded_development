@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install clang-format (same version as requirements-dev.txt)
-        run: pipx install clang-format==20.1.8
+        run: pipx install clang-format==23.1.5
       - name: Check formatting
         run: git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror --style=file
 
@@ -65,7 +65,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download v8.30.1 -R gitleaks/gitleaks -D /tmp/gitleaks             -p gitleaks_8.30.1_linux_x64.tar.gz -p gitleaks_8.30.1_checksums.txt
+          # GitHub release downloads intermittently return HTTP 504: retry before failing.
+          for attempt in 1 2 3; do
+            gh release download v8.30.1 -R gitleaks/gitleaks -D /tmp/gitleaks --clobber \
+              -p gitleaks_8.30.1_linux_x64.tar.gz -p gitleaks_8.30.1_checksums.txt && break
+            [ "${attempt}" = 3 ] && exit 1
+            sleep 20
+          done
           cd /tmp/gitleaks
           grep ' gitleaks_8.30.1_linux_x64.tar.gz$' gitleaks_8.30.1_checksums.txt | sha256sum --check -
           tar -xzf gitleaks_8.30.1_linux_x64.tar.gz gitleaks
