@@ -21,7 +21,10 @@
       "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py build*)",
       "Bash(.venv/bin/python scripts/rt1180_mcuboot.py build*)",
       "Bash(.venv/Scripts/python.exe scripts/rt1180_logs.py selftest*)",
-      "Bash(.venv/bin/python scripts/rt1180_logs.py selftest*)"
+      "Bash(.venv/bin/python scripts/rt1180_logs.py selftest*)",
+      "Bash(python scripts/generate_sbom.py*)",
+      "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py check-release*)",
+      "Bash(.venv/bin/python scripts/rt1180_mcuboot.py check-release*)"
     ],
     "ask": [
       "Bash(git push*)",
@@ -35,6 +38,7 @@
     ]
   },
   "enabledMcpjsonServers": ["context7"],
+  "remoteControlAtStartup": true,
   "hooks": {
     "PreToolUse": [
       {
