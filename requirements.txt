@@ -1,11 +1,11 @@
 # Python tooling required by the pinned MCUXpresso SDK workflow.
-west==1.4.0
-PyYAML==6.0.2
+west==1.5.0
+PyYAML==6.0.3
 # MCUboot imgtool 2.4.0 (shipped in the SDK, middleware/mcuboot_opensource/scripts) dependencies.
 cryptography==50.0.2
 intelhex==2.3.0
-click==8.1.8
-cbor2==5.9.0
+click==8.5.0
+cbor2==6.2.0.post2
 # Log retrieval over UART (scripts/rt1180_logs.py uart). littlefs-python, needed by
 # `rt1180_logs.py flash`, is not listed: it has no wheel for every Python version.
 pyserial==3.5
