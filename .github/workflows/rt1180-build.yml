@@ -153,17 +153,31 @@ jobs:
           .venv/bin/python scripts/generate_sbom.py
           pipx run --spec spdx-tools==0.8.5 pyspdxtools -i build/sbom/aied-rt1180-firmware.spdx.json
 
+      # grype is installed directly with checksum verification and retries (the action's installer
+      # failed twice on HTTP 504 from GitHub release downloads).
+      - name: Install grype 0.121.0 (checksum verified)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in 1 2 3; do
+            gh release download v0.121.0 -R anchore/grype -D /tmp/grype --clobber \
+              -p grype_0.121.0_linux_amd64.tar.gz -p grype_0.121.0_checksums.txt && break
+            [ "${attempt}" = 3 ] && exit 1
+            sleep 20
+          done
+          cd /tmp/grype
+          grep ' grype_0.121.0_linux_amd64.tar.gz$' grype_0.121.0_checksums.txt | sha256sum --check -
+          tar -xzf grype_0.121.0_linux_amd64.tar.gz grype
+
       - name: Scan the SBOM for known vulnerabilities
-        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
-        with:
-          sbom: build/sbom/aied-rt1180-firmware.spdx.json
-          grype-version: v0.121.0
-          # Fail on high or critical findings that have a fix; everything else is reported.
-          severity-cutoff: high
-          only-fixed: true
-          fail-build: true
-          output-format: table
-          output-file: build/sbom/vulnerabilities.txt
+        # Fail on high or critical findings that have a fix; everything else is reported.
+        run: |
+          set +e
+          /tmp/grype/grype sbom:build/sbom/aied-rt1180-firmware.spdx.json --only-fixed --fail-on high \
+            --output table --file build/sbom/vulnerabilities.txt
+          status=$?
+          cat build/sbom/vulnerabilities.txt
+          exit "${status}"
 
       - name: Publish the vulnerability report in the job summary
         if: always()
