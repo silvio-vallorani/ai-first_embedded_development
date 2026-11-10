@@ -1,4 +1,4 @@
-# Dual-core LED toggle (AM254-5 / MIMXRT1180-EVK, MIMXRT1189)
+# Dual-core LED toggle (AM254-4 / MIMXRT1180-EVK, MIMXRT1189)
 
 ## Behaviour
 
@@ -6,7 +6,7 @@
 - CM33 starts CM7 and waits for the CM7-ready event.
 - Once per second CM33 sends `APP_EVENT_TOGGLE_LED` using NXP MCMGR.
 - CM7 receives the event, records a pending request, and toggles the board user LED from its main loop.
-- The LED comes from `boards/<board>/include/aied_board.h`: DL1 (green, GPIO_EMC_B1_41 / GPIO3_IO09) on the AM254-5, the green user LED (GPIO_AD_27 / GPIO4_IO27) on the MIMXRT1180-EVK. Select the board with `--board am254-5` (`-Board am254-5`); the default is the EVK.
+- The LED comes from `boards/<board>/include/aied_board.h`: DL1 (green, GPIO_EMC_B1_41 / GPIO3_IO09) on the AM254-4, the green user LED (GPIO_AD_27 / GPIO4_IO27) on the MIMXRT1180-EVK. Select the board with `--board am254-4` (`-Board am254-4`); the default is the EVK.
 
 The application uses no RTOS. MCMGR is the inter-core event mechanism supplied by the MCUXpresso Multicore SDK.
 
@@ -48,7 +48,7 @@ At start-up CM33 logs the boot number, the version, the toggle period, `CM7 read
 
 ### Logging (both variants)
 
-The build scripts always append `log/primary.cmake` and `log/primary.conf`. These add the logging service (`firmware/services/log`), its MCUXpresso port (`platform/log/mcux`) and the littlefs file-system adapter (`platform/storage/littlefs`), and enable littlefs + `mflash` on the log region at QSPI offset 0x7E0000 (ADR-0015). The CM33 main loop is non-blocking: it toggles the LED on time and calls `aied_log_port_poll()` continuously, which writes buffered records and answers the UART `logdump` command.
+The build scripts always append `log/primary.cmake` and `log/primary.conf`. These add the logging service (`firmware/services/log`), its MCUXpresso port (`platform/log/mcux`) and the littlefs file-system adapter (`platform/storage/littlefs`), and enable littlefs + `mflash` on the log region at QSPI offset 0x7E0000 (ADR-0015). Standalone builds (without `--mcuboot`) also append `standalone/primary.cmake`, which links with NXP's bootloader XIP linker so that `mflash` and the FlexSPI driver run from ITCM while they reprogram the NOR (ADR-0015). The CM33 main loop is non-blocking: it toggles the LED on time and calls `aied_log_port_poll()` continuously, which writes buffered records and answers the UART `logdump` command.
 
 ### CM7 image address and packaging
 
@@ -61,7 +61,7 @@ Do not replace these values with addresses copied from another board, memory tar
 - CM33 initializes MCMGR and board hardware, registers its event handler, then starts CM7.
 - CM7 initializes board hardware and the LED GPIO, initializes MCMGR, registers its event handler, and then sends `APP_EVENT_CM7_READY`.
 - The MCMGR callback only sets a flag. GPIO access remains in the CM7 main loop.
-- The LED pad is muxed by the board's `BOARD_InitPins()` (SDK pin mux on the EVK, `boards/am254-5/sdk/cm7/pin_mux.c` on the AM254-5); the CM7 application then configures the GPIO.
+- The LED pad is muxed by the board's `BOARD_InitPins()` (SDK pin mux on the EVK, `boards/am254-4/sdk/cm7/pin_mux.c` on the AM254-4); the CM7 application then configures the GPIO.
 - CI compilation validates both core images and SysBuild packaging. Physical LED behaviour still requires a test on the board.
 
 ## NXP references

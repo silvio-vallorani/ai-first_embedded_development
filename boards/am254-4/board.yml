@@ -1,5 +1,5 @@
-board: am254-5
-description: AM Microsystems EtherCAT load-cell converter, schematic rev 5 (2026-01-27)
+board: am254-4
+description: AM Microsystems EtherCAT load-cell converter, project AM254-4, schematic title block rev 3 (2025-11-28)
 mcu: MIMXRT1189CVM8C (U9, LFBGA-289)
 cores: [m33, m7]
 # Hardware design files are private (hw_reference/, never committed). References below are
@@ -7,7 +7,7 @@ cores: [m33, m7]
 role: >
   Development and sacrificial target for all phase-2 security work (keys, encrypted images,
   fuses, lifecycle changes, authenticated debug). Fuse and lifecycle operations are irreversible.
-sdk_base_board: evkmimxrt1180   # SDK board files reused; differences are overridden in boards/am254-5
+sdk_base_board: evkmimxrt1180   # SDK board files reused; differences are overridden in boards/am254-4
 external_memory:
   qspi_nor:
     part: Winbond W25Q128JWSIQ (U8, SOIC-8); U13 W25Q128JWPIQ (WSON-8) is an unpopulated alternative footprint
@@ -26,7 +26,7 @@ external_memory:
     verification: schematic_only
   eeprom: 24LC128 (U7, I2C)
 leds:
-  - {ref: DL1, color: green,  ball: R1, pad: GPIO_EMC_B1_41, gpio: GPIO3_IO09, resistor: R95 1k,   active: high, use: user LED of the CM7 image}
+  - {ref: DL1, color: green,  ball: R1, pad: GPIO_EMC_B1_41, gpio: GPIO3_IO09, resistor: R95 3.3k, active: high, use: user LED of the CM7 image}
   - {ref: DL4, color: blue,   ball: N2, pad: GPIO_EMC_B1_40, gpio: GPIO3_IO08, resistor: R79 499,  active: high}
   - {ref: DL5, color: red,    ball: R2, pad: GPIO_EMC_B2_01, gpio: GPIO3_IO11, resistor: R101 499, active: high}
   - {ref: DL2, color: yellow, ball: P1, pad: GPIO_EMC_B1_39, gpio: GPIO3_IO07, resistor: R94 499,  active: high,

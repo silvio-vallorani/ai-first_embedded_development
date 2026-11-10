@@ -5,26 +5,28 @@ Run with the project virtual environment, for example:
 
     .venv/Scripts/python scripts/rt1180_mcuboot.py build      (Windows)
     .venv/bin/python scripts/rt1180_mcuboot.py build          (Linux/macOS)
-    .venv/Scripts/python scripts/rt1180_mcuboot.py --board am254-5 build
-    .venv/Scripts/python scripts/rt1180_mcuboot.py --board am254-5 flash initial
+    .venv/Scripts/python scripts/rt1180_mcuboot.py --board am254-4 build
+    .venv/Scripts/python scripts/rt1180_mcuboot.py --board am254-4 flash initial
     .venv/Scripts/python scripts/rt1180_mcuboot.py check-release <image.bin>   (release guard, ADR-0011)
 
 --board selects the board under boards/ (default mimxrt1180_evk). The bootloader is the same for
-both boards (it only uses the debug UART and FlexSPI1 port A, wired identically). LINKSERVER_DEVICE
-overrides the LinkServer device/board string. The update-test procedure is described in
+both boards (it only uses the debug UART and FlexSPI1 port A, wired identically). flash uses the
+SEGGER J-Link by default (ADR-0017); --probe-tool linkserver selects NXP LinkServer (see
+scripts/probe.py for the environment variables). The update-test procedure is described in
 docs/engineering/MCUBOOT_UPDATE_TEST.md.
 """
 
 from __future__ import annotations
 
 import argparse
-import glob
 import os
 import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+import probe
 
 ROOT = Path(__file__).resolve().parents[1]
 SDK_ROOT = Path(os.environ.get("MCUXPRESSO_SDK", ROOT.parent / "mcuxpresso-sdk")).resolve()
@@ -44,9 +46,6 @@ PRIMARY_SLOT = 0x28040000
 SECONDARY_SLOT = 0x28240000
 SLOT_SIZE = 0x200000
 HEADER_SIZE = 0x400
-
-# The EVK flash configuration also fits the AM254-5 (same W25Q128JW on FlexSPI1 port A).
-LINKSERVER_DEVICE = os.environ.get("LINKSERVER_DEVICE", "MIMXRT1189:MIMXRT1180-EVK")
 
 
 def build_prefix() -> str:
@@ -200,21 +199,8 @@ def command_check_release(args: argparse.Namespace) -> None:
         sys.exit(f"{rejected} image(s) rejected as release candidates.")
 
 
-def linkserver() -> str:
-    """Locate LinkServer: LINKSERVER env, PATH, then the default NXP install folders."""
-    candidates = [os.environ.get("LINKSERVER", ""), shutil.which("LinkServer") or ""]
-    candidates += sorted(glob.glob("C:/nxp/LinkServer_*/LinkServer.exe"), reverse=True)
-    candidates += sorted(glob.glob("/usr/local/LinkServer*/LinkServer"), reverse=True)
-    for candidate in candidates:
-        if candidate and Path(candidate).is_file():
-            return candidate
-    sys.exit("Error: LinkServer not found. Install NXP LinkServer or set LINKSERVER.")
-
-
 def command_flash(args: argparse.Namespace) -> None:
-    """Program one step of the update test with LinkServer."""
-    tool = linkserver()
-    base = [tool, "flash"] + (["--probe", args.probe] if args.probe else []) + [LINKSERVER_DEVICE, "load"]
+    """Program one step of the update test through the SWD probe (J-Link by default)."""
     images = {image.name: image for image in IMAGES}
     if args.step == "initial":
         bootloader = OUTPUT_DIR / BOOTLOADER_ELF.name
@@ -222,29 +208,30 @@ def command_flash(args: argparse.Namespace) -> None:
         require(bootloader, "Run the build command first.")
         require(v1, "Run the build command first.")
         # Erase everything once so no stale image or trailer remains in either slot.
-        run(base + ["--erase-all", "--no-reset", bootloader])
-        run(base + [f"{v1}:0x{PRIMARY_SLOT:08X}"])
+        probe.program([(bootloader, None), (v1, PRIMARY_SLOT)], erase_all=True, reset=True,
+                      tool=args.probe_tool, serial=args.probe)
     else:
         image = images[args.step]
         signed = OUTPUT_DIR / image.file_name
         require(signed, "Run the build command first.")
-        run(base + ["--no-reset", f"{signed}:0x{SECONDARY_SLOT:08X}"])
+        probe.program([(signed, SECONDARY_SLOT)], reset=False, tool=args.probe_tool, serial=args.probe)
         print("Secondary slot programmed. Press the board RESET button to let MCUboot perform the update.")
 
 
 def main() -> None:
     global BOARD, OUTPUT_DIR
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--board", default=BOARD, help="board under boards/ (mimxrt1180_evk or am254-5)")
+    parser.add_argument("--board", default=BOARD, help="board under boards/ (mimxrt1180_evk or am254-4)")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("build", help="build bootloader and signed v1/v2/v3 images").set_defaults(func=command_build)
-    flash = sub.add_parser("flash", help="program one step of the update test with LinkServer")
+    flash = sub.add_parser("flash", help="program one step of the update test through the SWD probe")
     flash.add_argument(
         "step",
         choices=("initial", "v2", "v3"),
         help="initial: erase all + MCUboot + v1 in primary slot; v2/v3: test image in secondary slot",
     )
-    flash.add_argument("--probe", help="LinkServer probe serial or #index when several are connected")
+    flash.add_argument("--probe-tool", choices=probe.TOOLS, help="jlink (default, or PROBE_TOOL) or linkserver")
+    flash.add_argument("--probe", help="probe serial number (J-Link) or serial/#index (LinkServer)")
     flash.set_defaults(func=command_flash)
     check = sub.add_parser("check-release", help="fail if an image is signed with the public development key")
     check.add_argument("images", nargs="+", type=Path)

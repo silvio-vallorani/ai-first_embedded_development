@@ -7,11 +7,11 @@ targets:
     board: mimxrt1180_evk
     core: m7
     configuration: release
-  - name: am254-5_m33
-    board: am254-5
+  - name: am254-4_m33
+    board: am254-4
     core: m33
     configuration: release
-  - name: am254-5_m7
-    board: am254-5
+  - name: am254-4_m7
+    board: am254-4
     core: m7
     configuration: release

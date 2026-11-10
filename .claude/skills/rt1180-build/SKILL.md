@@ -5,7 +5,7 @@ description: Build, sign and check the MIMXRT1180-EVK firmware of this project (
 
 # RT1180 firmware build
 
-Targets: AM254-5 custom board (`boards/am254-5`, the board for all hardware tests) and MIMXRT1180-EVK (`boards/mimxrt1180_evk`, default), both MIMXRT1189 (CM33 + CM7), MCUXpresso SDK 26.09.00, Arm GNU Toolchain 14.2. Read `docs/toolchains/MCUXPRESSO_SDK.md` and `docs/boards/AM254-5.md` for background; this skill is the short operational path. Never build an EVK image for the AM254-5: the EVK user LED pad (GPIO_AD_27) is the ADC master clock there.
+Targets: AM254-4 custom board (`boards/am254-4`, the board for all hardware tests) and MIMXRT1180-EVK (`boards/mimxrt1180_evk`, default), both MIMXRT1189 (CM33 + CM7), MCUXpresso SDK 26.09.00, Arm GNU Toolchain 14.2. Read `docs/toolchains/MCUXPRESSO_SDK.md` and `docs/boards/AM254-4.md` for background; this skill is the short operational path. Never build an EVK image for the AM254-4: the EVK user LED pad (GPIO_AD_27) is the ADC master clock there.
 
 ## Environment (Windows dev PC)
 
@@ -23,9 +23,9 @@ The SDK workspace is `../mcuxpresso-sdk`. If `west update_board` fails with "unt
 | Goal | Command | Output |
 |---|---|---|
 | Host unit tests | `python scripts/host_tests.py` | `build/host-local` |
-| LED example, direct ROM boot | `.\scripts\build_rt1180.ps1 [-Board am254-5]` | `build/rt1180-led-toggle` (EVK) / `build/am254-5-led-toggle` |
-| LED example for MCUboot slot | `.\scripts\build_rt1180.ps1 [-Board am254-5] -McuBoot [-Version X.Y.Z] [-TogglePeriodUs N] [-NoConfirm]` | `build/rt1180-led-mcuboot` / `build/am254-5-led-mcuboot` |
-| MCUboot + signed v1/v2/v3 test set | `.\.venv\Scripts\python.exe scripts\rt1180_mcuboot.py [--board am254-5] build` | `build/rt1180-update-test` / `build/am254-5-update-test` |
+| LED example, direct ROM boot | `.\scripts\build_rt1180.ps1 [-Board am254-4]` | `build/rt1180-led-toggle` (EVK) / `build/am254-4-led-toggle` |
+| LED example for MCUboot slot | `.\scripts\build_rt1180.ps1 [-Board am254-4] -McuBoot [-Version X.Y.Z] [-TogglePeriodUs N] [-NoConfirm]` | `build/rt1180-led-mcuboot` / `build/am254-4-led-mcuboot` |
+| MCUboot + signed v1/v2/v3 test set | `.\.venv\Scripts\python.exe scripts\rt1180_mcuboot.py [--board am254-4] build` | `build/rt1180-update-test` / `build/am254-4-update-test` |
 | SBOM of bootloader + v1 (after the test set) | `python scripts/generate_sbom.py` | `build/sbom/aied-rt1180-firmware.spdx.json` |
 | Release guard (fails on dev-key images) | `.\.venv\Scripts\python.exe scripts\rt1180_mcuboot.py check-release <image.bin>` | exit code |
 

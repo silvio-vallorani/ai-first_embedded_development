@@ -57,7 +57,7 @@ Records go to a 2-KiB RAM buffer first and are written to flash by `aied_log_por
 
 You can also type `logdump` and press Enter in a serial terminal.
 
-**From a board that no longer runs (debugger)**: LinkServer reads the log region and the files are extracted on the PC. This needs littlefs-python, which exists for Python 3.12–3.14 only:
+**From a board that no longer runs (debugger)**: the probe reads the log region and the files are extracted on the PC. The J-Link (default) reads through the XIP window, which needs any bootable image so that the ROM configures FlexSPI; `--probe-tool linkserver` reads the NOR directly. This needs littlefs-python, which exists for Python 3.12–3.14 only:
 
 ```sh
 py -3.14 -m pip install littlefs-python==0.19.0

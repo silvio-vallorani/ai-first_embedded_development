@@ -5,7 +5,7 @@ A multi-board, dual-core embedded firmware template for NXP i.MX RT1189-class de
 ## Baseline
 
 - MCU: NXP MIMXRT1189 (Cortex-M33 + Cortex-M7).
-- Target board: AM254-5 custom board ([board page](docs/boards/AM254-5.md)); reference board: MIMXRT1180-EVK.
+- Target board: AM254-4 custom board ([board page](docs/boards/AM254-4.md)); reference board: MIMXRT1180-EVK.
 - MCUXpresso SDK: **26.09.00** (pinned release; see [SDK setup](docs/toolchains/MCUXPRESSO_SDK.md)).
 - Arm GNU Toolchain: **14.2.x**, as validated by NXP for this SDK release.
 - External boot/update storage: 128-Mbit (16-MiB) Winbond W25Q128JW-family QSPI NOR reference device; exact ordering code and board revision must be confirmed against the populated board BOM.

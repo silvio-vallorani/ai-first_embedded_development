@@ -12,12 +12,12 @@
     "${workspaceFolder}/../mcuxpresso-sdk/mcuxsdk/**",
     "${env:MCUXPRESSO_SDK}/mcuxsdk/**"
   ],
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.terminal.activateEnvironment": true,
-  "[windows]": {
-    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
-  },
   "cmake.configureOnOpen": true,
+  "jlinkMcp.probeType": "jlink",
+  "jlinkMcp.jlink.device": "MIMXRT1189xxx8_M33",
+  "jlinkMcp.jlink.interface": "SWD",
+  "jlinkMcp.jlink.speed": 1000,
   "files.insertFinalNewline": true,
   "editor.formatOnSave": true
 }

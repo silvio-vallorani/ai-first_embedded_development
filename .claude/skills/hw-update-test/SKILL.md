@@ -1,6 +1,6 @@
 ---
 name: hw-update-test
-description: Run the MCUboot update test on a connected AM254-5 custom board (default target) or MIMXRT1180-EVK (T1 boot v1, T2 confirmed update to v2, T3 rollback of unconfirmed v3, T4 persistent log check). Flashes the board, so only the user starts it.
+description: Run the MCUboot update test on a connected AM254-4 custom board (default target) or MIMXRT1180-EVK (T1 boot v1, T2 confirmed update to v2, T3 rollback of unconfirmed v3, T4 persistent log check). Flashes the board, so only the user starts it.
 disable-model-invocation: true
 ---
 
@@ -10,9 +10,9 @@ Follow `docs/engineering/MCUBOOT_UPDATE_TEST.md` exactly; it defines the pass cr
 
 ## Before starting
 
-1. Ask the user which board is connected (AM254-5 through the Tag-Connect J1, or the EVK through its MCU-Link USB) and confirm that no other tool holds the probe or the serial port. For the AM254-5 pass `--board am254-5` to every `rt1180_mcuboot.py` command.
-2. Check the probe: `C:\nxp\LinkServer_*\LinkServer.exe probes`. Find the VCOM port: `Get-PnpDevice -PresentOnly | ? FriendlyName -match 'VCOM|MCU-Link'`.
-3. Make sure `build/<board>-update-test/images.txt` (`am254-5` or `rt1180` for the EVK) exists and is newer than the last source change. Otherwise build first (skill `rt1180-build`).
+1. Ask the user which board is connected (AM254-4 through the Tag-Connect J1, or the EVK through its MCU-Link USB) and confirm that no other tool holds the probe or the serial port. For the AM254-4 pass `--board am254-4` to every `rt1180_mcuboot.py` command.
+2. Check the probe: the SEGGER J-Link is the reference (ADR-0017). Use the J-Link MCP server (`list_devices`) if it is configured, otherwise `JLink.exe` from `C:\Program Files\SEGGER\JLink` (never a `jlink` from the JDK on PATH). Find the console port: the USB-UART on J1 pins 7/8 for the AM254-4 (`Get-PnpDevice -PresentOnly | ? FriendlyName -match 'COM'`), the MCU-Link VCOM for the EVK.
+3. Make sure `build/<board>-update-test/images.txt` (`am254-4` or `rt1180` for the EVK) exists and is newer than the last source change. Otherwise build first (skill `rt1180-build`).
 4. Warn the user that T1 erases the whole flash, including the persistent logs.
 
 ## Running each step
@@ -28,7 +28,7 @@ T4: close the console capture, then run `.venv\Scripts\python.exe scripts\rt1180
 
 ## On failure
 
-Stop at the first FAIL. Keep the console log, LinkServer output and step number, and use the "If a step fails" table of the test document. Do not reflash or change firmware to work around the failure without the user's agreement.
+Stop at the first FAIL. Keep the console log, probe output and step number, and use the "If a step fails" table of the test document. Do not reflash or change firmware to work around the failure without the user's agreement.
 
 ## Report
 

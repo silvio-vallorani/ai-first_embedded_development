@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Retrieve the persistent log files of the MIMXRT1180-EVK (ADR-0015).
+"""Retrieve the persistent log files of the MIMXRT1189 boards (AM254-4, MIMXRT1180-EVK; ADR-0015).
 
     python scripts/rt1180_logs.py uart --port COM5      # running firmware, `logdump` command
     python scripts/rt1180_logs.py flash                 # debugger dump of the log region
@@ -7,21 +7,22 @@
 
 The files are written to build/logs/<method>-<date-time>/ unchanged (text, one record per line).
 `uart` needs pyserial; `flash` needs littlefs-python, which has wheels for Python 3.12-3.14.
+`flash` uses the SEGGER J-Link by default (scripts/probe.py, ADR-0017). The J-Link reads through
+the XIP window, so the ROM must have configured FlexSPI (any bootable image); otherwise use
+--probe-tool linkserver, whose flash driver reads the NOR directly.
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime
-import glob
-import os
 import re
-import shutil
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
+
+import probe
 
 ROOT = Path(__file__).resolve().parents[1]
 LOGS_DIR = ROOT / "build" / "logs"
@@ -33,8 +34,6 @@ BLOCK_COUNT = 32
 READ_SIZE = 16
 PROG_SIZE = 256
 LOOKAHEAD_SIZE = 16
-# Same flash wiring on the MIMXRT1180-EVK and the AM254-5; LINKSERVER_DEVICE overrides it.
-LINKSERVER_DEVICE = os.environ.get("LINKSERVER_DEVICE", "MIMXRT1189:MIMXRT1180-EVK")
 
 FILE_BEGIN = re.compile(r"^=== FILE (\S+) (\d+) ===$")
 FILE_END = "=== END FILE ==="
@@ -117,26 +116,12 @@ def command_uart(args: argparse.Namespace) -> None:
     report(files, status, "uart")
 
 
-def linkserver() -> str:
-    """Locate LinkServer: LINKSERVER env, PATH, then the default NXP install folders."""
-    candidates = [os.environ.get("LINKSERVER", ""), shutil.which("LinkServer") or ""]
-    candidates += sorted(glob.glob("C:/nxp/LinkServer_*/LinkServer.exe"), reverse=True)
-    candidates += sorted(glob.glob("/usr/local/LinkServer*/LinkServer"), reverse=True)
-    for candidate in candidates:
-        if candidate and Path(candidate).is_file():
-            return candidate
-    sys.exit("Error: LinkServer not found. Install NXP LinkServer or set LINKSERVER.")
-
-
 def command_flash(args: argparse.Namespace) -> None:
     """Dump the log region through the debugger and extract the files on the host."""
     size = BLOCK_SIZE * BLOCK_COUNT
     with tempfile.TemporaryDirectory() as tmp:
         image_path = Path(tmp) / "log-region.bin"
-        command = [linkserver(), "flash"] + (["--probe", args.probe] if args.probe else [])
-        command += [LINKSERVER_DEVICE, "dump", hex(REGION_ADDRESS), hex(size), str(image_path)]
-        print("+", " ".join(command), flush=True)
-        subprocess.run(command, check=True)
+        probe.dump(REGION_ADDRESS, size, image_path, tool=args.probe_tool, serial=args.probe)
         image = image_path.read_bytes()
     if len(image) != size:
         sys.exit(f"Error: expected {size} bytes from the log region, got {len(image)}.")
@@ -190,8 +175,9 @@ def main() -> None:
     uart.add_argument("--baud", type=int, default=115200)
     uart.add_argument("--timeout", type=float, default=60.0, help="seconds to wait for the dump")
     uart.set_defaults(func=command_uart)
-    flash = sub.add_parser("flash", help="dump the log region with LinkServer (firmware not needed)")
-    flash.add_argument("--probe", help="LinkServer probe serial or #index")
+    flash = sub.add_parser("flash", help="dump the log region through the SWD probe (firmware not needed)")
+    flash.add_argument("--probe-tool", choices=probe.TOOLS, help="jlink (default, or PROBE_TOOL) or linkserver")
+    flash.add_argument("--probe", help="probe serial number (J-Link) or serial/#index (LinkServer)")
     flash.set_defaults(func=command_flash)
     sub.add_parser("selftest", help="check the parsers without hardware").set_defaults(func=command_selftest)
     args = parser.parse_args()
