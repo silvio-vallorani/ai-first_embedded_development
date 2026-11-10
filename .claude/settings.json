@@ -1,81 +1,84 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(but status*)",
-      "Bash(but diff*)",
-      "Bash(but show*)",
-      "Bash(git status*)",
-      "Bash(git log*)",
-      "Bash(git diff*)",
-      "Bash(git show*)",
-      "Bash(gh pr view*)",
-      "Bash(gh pr list*)",
-      "Bash(gh pr checks*)",
-      "Bash(gh run view*)",
-      "Bash(gh run list*)",
-      "Bash(gh run watch*)",
-      "Bash(python scripts/host_tests.py*)",
-      "Bash(ctest *)",
-      "Bash(cmake --build *)",
-      "Bash(bash scripts/build_rt1180.sh*)",
-      "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py build*)",
-      "Bash(.venv/bin/python scripts/rt1180_mcuboot.py build*)",
-      "Bash(.venv/Scripts/python.exe scripts/rt1180_logs.py selftest*)",
-      "Bash(.venv/bin/python scripts/rt1180_logs.py selftest*)",
-      "Bash(python scripts/generate_sbom.py*)",
-      "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py check-release*)",
-      "Bash(.venv/bin/python scripts/rt1180_mcuboot.py check-release*)"
-    ],
-    "ask": [
-      "Bash(git push*)",
-      "Bash(but push*)",
-      "Bash(but pr*)",
-      "Bash(gh pr create*)",
-      "Bash(gh pr merge*)",
-      "Bash(gh workflow run*)",
-      "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py *flash*)",
-      "Bash(.venv/bin/python scripts/rt1180_mcuboot.py *flash*)",
-      "Bash(*JLink.exe*)",
-      "Bash(*JLinkExe*)",
-      "Bash(*LinkServer*)",
-      "mcp__jlink__flash",
-      "mcp__jlink__erase",
-      "mcp__jlink__write_memory",
-      "mcp__jlink__probe_command",
-      "mcp__jlink__reset",
-      "mcp__jlink__gdb_load",
-      "mcp__jlink__gdb_command",
-      "mcp__jlink__rtt_send"
-    ]
-  },
-  "enabledMcpjsonServers": ["context7"],
-  "remoteControlAtStartup": true,
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/adr_guard.py\"",
-            "timeout": 10,
-            "statusMessage": "Checking ADR-guarded files"
-          }
+    "permissions": {
+        "allow": [
+            "Bash(but status*)",
+            "Bash(but diff*)",
+            "Bash(but show*)",
+            "Bash(git status*)",
+            "Bash(git log*)",
+            "Bash(git diff*)",
+            "Bash(git show*)",
+            "Bash(gh pr view*)",
+            "Bash(gh pr list*)",
+            "Bash(gh pr checks*)",
+            "Bash(gh run view*)",
+            "Bash(gh run list*)",
+            "Bash(gh run watch*)",
+            "Bash(python scripts/host_tests.py*)",
+            "Bash(ctest *)",
+            "Bash(cmake --build *)",
+            "Bash(bash scripts/build_rt1180.sh*)",
+            "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py build*)",
+            "Bash(.venv/bin/python scripts/rt1180_mcuboot.py build*)",
+            "Bash(.venv/Scripts/python.exe scripts/rt1180_logs.py selftest*)",
+            "Bash(.venv/bin/python scripts/rt1180_logs.py selftest*)",
+            "Bash(python scripts/generate_sbom.py*)",
+            "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py check-release*)",
+            "Bash(.venv/bin/python scripts/rt1180_mcuboot.py check-release*)"
+        ],
+        "ask": [
+            "Bash(git push*)",
+            "Bash(but push*)",
+            "Bash(but pr*)",
+            "Bash(gh pr create*)",
+            "Bash(gh pr merge*)",
+            "Bash(gh workflow run*)",
+            "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py *flash*)",
+            "Bash(.venv/bin/python scripts/rt1180_mcuboot.py *flash*)",
+            "Bash(*JLink.exe*)",
+            "Bash(*JLinkExe*)",
+            "Bash(*LinkServer*)",
+            "mcp__jlink__flash",
+            "mcp__jlink__erase",
+            "mcp__jlink__write_memory",
+            "mcp__jlink__probe_command",
+            "mcp__jlink__reset",
+            "mcp__jlink__gdb_load",
+            "mcp__jlink__gdb_command",
+            "mcp__jlink__rtt_send"
         ]
-      }
+    },
+    "enabledMcpjsonServers": [
+        "context7",
+        "jlink"
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_edit.py\"",
-            "timeout": 240,
-            "statusMessage": "Formatting and running host unit tests"
-          }
+    "remoteControlAtStartup": true,
+    "hooks": {
+        "PreToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/adr_guard.py\"",
+                        "timeout": 10,
+                        "statusMessage": "Checking ADR-guarded files"
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_edit.py\"",
+                        "timeout": 240,
+                        "statusMessage": "Formatting and running host unit tests"
+                    }
+                ]
+            }
         ]
-      }
-    ]
-  }
+    }
 }

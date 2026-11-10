@@ -3,6 +3,20 @@
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp"
+    },
+    "jlink": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "-e",
+        "require('child_process').spawn('npx',['-y','jlink-mcp@0.8.0'],{stdio:'inherit',shell:true}).on('exit',c=>process.exit(c??1))"
+      ],
+      "env": {
+        "PROBE_TYPE": "jlink",
+        "JLINK_DEVICE": "MIMXRT1189xxx8_M33",
+        "JLINK_INTERFACE": "SWD",
+        "JLINK_SPEED": "1000"
+      }
     }
   }
 }
