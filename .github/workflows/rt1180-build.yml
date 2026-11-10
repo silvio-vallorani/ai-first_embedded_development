@@ -136,28 +136,28 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Build the AM254-5 LED-toggle application
-        run: bash scripts/build_rt1180.sh --board am254-5
+      - name: Build the AM254-4 LED-toggle application
+        run: bash scripts/build_rt1180.sh --board am254-4
 
-      - name: AM254-5 CM7 image drives DL1 and never touches GPIO_AD_27 (ADC_MCLK on this board)
+      - name: AM254-4 CM7 image drives DL1 and never touches GPIO_AD_27 (ADC_MCLK on this board)
         run: |
-          elf=build/am254-5-led-toggle/led_toggle_secondary_core/led_toggle_secondary_core_cm7.elf
+          elf=build/am254-4-led-toggle/led_toggle_secondary_core/led_toggle_secondary_core_cm7.elf
           disasm="$(arm-none-eabi-objdump -d "${elf}")"
           # IOMUXC mux registers: GPIO_AD_27 = 0x42a10178, GPIO_EMC_B1_41 = 0x42a100b4 (fsl_iomuxc.h).
           if grep -qiE '\.word\s+0x42a10178\b' <<< "${disasm}"; then
-            echo "::error::The AM254-5 CM7 image configures GPIO_AD_27, the AD7767 master clock on this board."
+            echo "::error::The AM254-4 CM7 image configures GPIO_AD_27, the AD7767 master clock on this board."
             exit 1
           fi
           grep -qiE '\.word\s+0x42a100b4\b' <<< "${disasm}"
 
-      - name: Build and sign the AM254-5 MCUboot update-test images
-        run: .venv/bin/python scripts/rt1180_mcuboot.py --board am254-5 build
+      - name: Build and sign the AM254-4 MCUboot update-test images
+        run: .venv/bin/python scripts/rt1180_mcuboot.py --board am254-4 build
 
-      - name: Upload the AM254-5 MCUboot update-test images
+      - name: Upload the AM254-4 MCUboot update-test images
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: am254-5-mcuboot-update-test
-          path: build/am254-5-update-test/
+          name: am254-4-mcuboot-update-test
+          path: build/am254-4-update-test/
           if-no-files-found: error
           retention-days: 30
 

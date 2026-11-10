@@ -2,7 +2,7 @@
 # Build the CM33 + CM7 LED-toggle application through the NXP SysBuild template.
 #
 # Usage: build_rt1180.sh [--board NAME] [--mcuboot] [--version X.Y.Z] [--toggle-period-us N] [--no-confirm]
-#   --board NAME         Board under boards/: mimxrt1180_evk (default) or am254-5.
+#   --board NAME         Board under boards/: mimxrt1180_evk (default) or am254-4.
 #   --mcuboot            Link for the MCUboot primary slot (ADR-0014) instead of direct ROM boot.
 #   --version X.Y.Z      Version printed by the application (use the signed image version).
 #   --toggle-period-us N LED toggle period in microseconds.
@@ -107,17 +107,28 @@ cp "${EXAMPLE_DIR}/common/app_events.h" "${OVERLAY}/primary/app_events.h"
 cp "${EXAMPLE_DIR}/common/app_events.h" "${OVERLAY}/secondary/app_events.h"
 cp "${BOARD_DIR}/include/aied_board.h" "${OVERLAY}/primary/aied_board.h"
 cp "${BOARD_DIR}/include/aied_board.h" "${OVERLAY}/secondary/aied_board.h"
-# A board without an SDK board port of its own replaces the EVK pin_mux of each image it provides.
+# A board without an SDK board port of its own replaces EVK board-port files of an image:
+# pin_mux.[ch] and/or hardware_init.c + app.h. CUSTOM_PRJ_CONF_PATHS is merged after the SDK
+# board-category prj.conf, which selects the EVK files.
 for image in primary:cm33 secondary:cm7; do
-    if [[ -f "${BOARD_DIR}/sdk/${image#*:}/pin_mux.c" ]]; then
-        cp "${BOARD_DIR}/sdk/${image#*:}/pin_mux.c" "${BOARD_DIR}/sdk/${image#*:}/pin_mux.h" "${OVERLAY}/${image%%:*}/"
-        # CUSTOM_PRJ_CONF_PATHS is merged after the SDK board-category prj.conf, which selects the EVK pin_mux.
-        printf 'CONFIG_MCUX_PRJSEG_module.board.pinmux_customize_folder=y\n' > "${OVERLAY}/${image%%:*}/board_pinmux.conf"
-        perl -0pi -e 's/^(project\()/set(CUSTOM_PRJ_CONF_PATHS \$\{CMAKE_CURRENT_LIST_DIR\}\/board_pinmux.conf)\n$1/m' \
-            "${OVERLAY}/${image%%:*}/CMakeLists.txt"
-        grep -q '^set(CUSTOM_PRJ_CONF_PATHS' "${OVERLAY}/${image%%:*}/CMakeLists.txt"
-        printf '\nmcux_add_source(\n    SOURCES pin_mux.c pin_mux.h\n)\n' >> "${OVERLAY}/${image%%:*}/CMakeLists.txt"
+    src="${BOARD_DIR}/sdk/${image#*:}"
+    dst="${OVERLAY}/${image%%:*}"
+    conf=""
+    files=""
+    if [[ -f "${src}/pin_mux.c" ]]; then
+        conf+="CONFIG_MCUX_PRJSEG_module.board.pinmux_customize_folder=y\n"
+        files+=" pin_mux.c pin_mux.h"
     fi
+    if [[ -f "${src}/hardware_init.c" ]]; then
+        conf+="CONFIG_MCUX_PRJSEG_project.hw_app_customize_folder=y\n"
+        files+=" hardware_init.c app.h"
+    fi
+    [[ -n "${files}" ]] || continue
+    (cd "${src}" && cp ${files} "${dst}/")
+    printf "${conf}" > "${dst}/board_port.conf"
+    perl -0pi -e 's/^(project\()/set(CUSTOM_PRJ_CONF_PATHS \$\{CMAKE_CURRENT_LIST_DIR\}\/board_port.conf)\n$1/m' "${dst}/CMakeLists.txt"
+    grep -q '^set(CUSTOM_PRJ_CONF_PATHS' "${dst}/CMakeLists.txt"
+    printf '\nmcux_add_source(\n    SOURCES%s\n)\n' "${files}" >> "${dst}/CMakeLists.txt"
 done
 
 test -f "${OVERLAY}/primary/sysbuild.cmake"
@@ -143,6 +154,8 @@ cat "${EXAMPLE_DIR}/log/primary.conf" >> "${OVERLAY}/primary/prj.conf"
 if [[ "${VARIANT}" == "mcuboot" ]]; then
     cat "${EXAMPLE_DIR}/mcuboot/primary.cmake" >> "${OVERLAY}/primary/CMakeLists.txt"
     cat "${EXAMPLE_DIR}/mcuboot/primary.conf" >> "${OVERLAY}/primary/prj.conf"
+else
+    cat "${EXAMPLE_DIR}/standalone/primary.cmake" >> "${OVERLAY}/primary/CMakeLists.txt"
 fi
 APP_MACROS=""
 if [[ -n "${APP_VERSION}" ]]; then

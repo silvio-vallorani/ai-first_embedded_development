@@ -54,6 +54,11 @@ int main(void)
 
     (void)MCMGR_Init();
 
+    /* Startup-data handshake: CM33 starts this core with kMCMGR_Start_Synchronous and waits for it. */
+    uint32_t startup_data;
+    while (MCMGR_GetStartupData(kMCMGR_Core0, &startup_data) != kStatus_MCMGR_Success) {
+    }
+
     if (MCMGR_RegisterEvent(kMCMGR_RemoteApplicationEvent, app_remote_event_handler, NULL) != kStatus_MCMGR_Success) {
         for (;;) {
         }

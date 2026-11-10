@@ -52,6 +52,8 @@ jobs:
         run: python scripts/rt1180_logs.py selftest
       - name: SBOM generator
         run: python scripts/generate_sbom.py selftest
+      - name: Probe command generation
+        run: python scripts/probe.py selftest
 
   secrets:
     name: Secret scanning (gitleaks)

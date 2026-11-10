@@ -16,3 +16,9 @@ mcux_add_include(
              platform/storage/littlefs
              platform/log/mcux
 )
+
+# littlefs and the log formatter overflow the SDK linker default stack (1 KiB, MSPLIM HardFault seen on
+# hardware, 2026-11-09); 8 KiB as in the SDK flash examples.
+mcux_add_armgcc_configuration(
+    LD "-Xlinker --defsym=__stack_size__=0x2000"
+)

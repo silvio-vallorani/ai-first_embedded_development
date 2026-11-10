@@ -1,6 +1,6 @@
 # ADR-0016: Security architecture, phase 2 (layout, TrustZone, encryption, keys, debug)
 
-- Status: **Proposed — draft**. Decisions below are proposals; each depends on an AM254-5 spike (S1–S7) before acceptance.
+- Status: **Proposed — draft**. Decisions below are proposals; each depends on an AM254-4 spike (S1–S7) before acceptance.
 - Date: 2026-11-09
 - Plan: phase B of `docs/compliance/CRA_GAP_ANALYSIS.md`; feeds phases C (TRDC), D (TrustZone), E (keys, lifecycle, debug).
 
@@ -113,19 +113,19 @@ TRDC is configured and **locked before CM7 starts**. The table is kept in a host
 | Debug credential key (DCK) | ECDSA | Certificate chained to the OEM root of trust | HSM / service tooling | Rotate DCK; per-device scope optional |
 | Development | NXP public keys | EVKs only | SDK | Never in release (`check-release`) |
 
-## Spikes on the AM254-5
+## Spikes on the AM254-4
 
 | Spike | Question | Done when |
 |---|---|---|
 | S1 OTFAD XIP with ELE keys | Can CM33 execute in place from an OTFAD-encrypted FlexSPI1 region whose key is unwrapped from an ELE blob at boot? OTFAD read latency? Can the ELE hold or protect the ECIES key, or boot MCUboot from an encrypted container? | Encrypted test image runs; the region reads as ciphertext with OTFAD off; latency measured; no key visible in a flash dump |
 | S2 Direct XIP without remap | MCUboot `DIRECT_XIP` + `DIRECT_XIP_REVERT` on the RT1189 with two per-slot builds; confirm the RT1189 has no FlexSPI remap | v1 in A → v2 in B confirmed; v3 in A not confirmed is reverted to B |
-| S3 ELE key services | RNG, key blob wrap/unwrap across reset, monotonic counter or fuse for anti-rollback | Blob unwrapped after reset; counter read/advance on the AM254-5 |
+| S3 ELE key services | RNG, key blob wrap/unwrap across reset, monotonic counter or fuse for anti-rollback | Blob unwrapped after reset; counter read/advance on the AM254-4 |
 | S4 In-place transform | MCUboot encryption → OTFAD encryption of the inactive slot with a power-cut-safe journal | Power cut at random points during install; previous release always boots; install resumes |
 | S5 TrustZone + MCUboot | MCUboot boots a CM33 S + NS image in place; NSC calls work; CM7 still starts | Log and confirm through NSC on hardware |
 | S6 TRDC and sizes | CM7, DMA and DAP forbidden accesses fault after lock; signed image sizes and XIP performance | Bus faults observed and logged; numbers recorded in `MEMORY_MAP.md` |
 | S7 Debug authentication | OEM Closed with ELE debug authentication, scoped and device-bound credentials | Locked port refuses; valid credential opens the allowed scope only; wrong device refused |
 
-All spikes run on the **AM254-5 custom board** (`docs/boards/AM254-5.md`), the designated sacrificial board. S3 and S7 write irreversible fuses or change the lifecycle: they run only with explicit authorization for every fuse or lifecycle operation.
+All spikes run on the **AM254-4 custom board** (`docs/boards/AM254-4.md`), the designated sacrificial board. S3 and S7 write irreversible fuses or change the lifecycle: they run only with explicit authorization for every fuse or lifecycle operation.
 
 ## Consequences (if accepted)
 

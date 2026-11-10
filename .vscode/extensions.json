@@ -5,6 +5,7 @@
     "twxs.cmake",
     "llvm-vs-code-extensions.vscode-clangd",
     "ms-python.python",
-    "yzhang.markdown-all-in-one"
+    "yzhang.markdown-all-in-one",
+    "Klievan.jlink-mcp"
   ]
 }

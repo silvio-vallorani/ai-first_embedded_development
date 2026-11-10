@@ -19,4 +19,5 @@ Statuses: Proposed, Accepted, Deprecated, Superseded. Accepted means the archite
 | [0013](ADR-0013-slot-swap-and-sector-reserve.md) | Slot swap and 50% sector reserve | Accepted direction; implementation pending |
 | [0014](ADR-0014-mcuboot-phase1-nxp-layout.md) | MCUboot phase 1 with NXP reference layout | Accepted for phase 1; validation pending |
 | [0015](ADR-0015-logging-and-persistent-log-region.md) | Logging service and persistent log region | Accepted; validation pending |
-| [0016](ADR-0016-security-architecture-phase2.md) | Security architecture phase 2: layout, TrustZone, encryption, keys, debug | Proposed (draft); AM254-5 spikes pending |
+| [0016](ADR-0016-security-architecture-phase2.md) | Security architecture phase 2: layout, TrustZone, encryption, keys, debug | Proposed (draft); AM254-4 spikes pending |
+| [0017](ADR-0017-reference-debug-probe-jlink.md) | SEGGER J-Link as the reference SWD probe | Accepted; hardware validation pending |

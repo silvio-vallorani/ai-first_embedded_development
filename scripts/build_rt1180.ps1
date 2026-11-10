@@ -2,7 +2,7 @@
 .SYNOPSIS
 Build the CM33 + CM7 LED-toggle application through the NXP SysBuild template.
 .PARAMETER Board
-Board under boards/: mimxrt1180_evk (default) or am254-5.
+Board under boards/: mimxrt1180_evk (default) or am254-4.
 .PARAMETER McuBoot
 Link for the MCUboot primary slot (ADR-0014) instead of direct ROM boot.
 .PARAMETER Version
@@ -80,20 +80,30 @@ Copy-Item (Join-Path $ExampleDir "common/app_events.h") (Join-Path $Overlay "pri
 Copy-Item (Join-Path $ExampleDir "common/app_events.h") (Join-Path $Overlay "secondary/app_events.h") -Force
 Copy-Item (Join-Path $BoardDir "include/aied_board.h") (Join-Path $Overlay "primary/aied_board.h") -Force
 Copy-Item (Join-Path $BoardDir "include/aied_board.h") (Join-Path $Overlay "secondary/aied_board.h") -Force
-# A board without an SDK board port of its own replaces the EVK pin_mux of each image it provides.
+# A board without an SDK board port of its own replaces EVK board-port files of an image:
+# pin_mux.[ch] and/or hardware_init.c + app.h. CUSTOM_PRJ_CONF_PATHS is merged after the SDK
+# board-category prj.conf, which selects the EVK files.
 foreach ($Image in @(@("primary", "cm33"), @("secondary", "cm7"))) {
-    $PinMux = Join-Path $BoardDir "sdk/$($Image[1])"
-    if (Test-Path (Join-Path $PinMux "pin_mux.c")) {
-        $ImageDir = Join-Path $Overlay $Image[0]
-        Copy-Item (Join-Path $PinMux "pin_mux.c"), (Join-Path $PinMux "pin_mux.h") $ImageDir -Force
-        # CUSTOM_PRJ_CONF_PATHS is merged after the SDK board-category prj.conf, which selects the EVK pin_mux.
-        [System.IO.File]::WriteAllText((Join-Path $ImageDir "board_pinmux.conf"), "CONFIG_MCUX_PRJSEG_module.board.pinmux_customize_folder=y`n")
-        $ImageCMake = Join-Path $ImageDir "CMakeLists.txt"
-        $Text = [System.IO.File]::ReadAllText($ImageCMake)
-        $Patched = [regex]::new('(?m)^(project\()').Replace($Text, "set(CUSTOM_PRJ_CONF_PATHS `${CMAKE_CURRENT_LIST_DIR}/board_pinmux.conf)`n`$1", 1)
-        if ($Patched -eq $Text) { throw "Cannot select the board pin_mux in $ImageCMake." }
-        [System.IO.File]::WriteAllText($ImageCMake, $Patched + "`nmcux_add_source(`n    SOURCES pin_mux.c pin_mux.h`n)`n")
+    $Src = Join-Path $BoardDir "sdk/$($Image[1])"
+    $ImageDir = Join-Path $Overlay $Image[0]
+    $Conf = ""
+    $Files = @()
+    if (Test-Path (Join-Path $Src "pin_mux.c")) {
+        $Conf += "CONFIG_MCUX_PRJSEG_module.board.pinmux_customize_folder=y`n"
+        $Files += "pin_mux.c", "pin_mux.h"
     }
+    if (Test-Path (Join-Path $Src "hardware_init.c")) {
+        $Conf += "CONFIG_MCUX_PRJSEG_project.hw_app_customize_folder=y`n"
+        $Files += "hardware_init.c", "app.h"
+    }
+    if ($Files.Count -eq 0) { continue }
+    foreach ($File in $Files) { Copy-Item (Join-Path $Src $File) $ImageDir -Force }
+    [System.IO.File]::WriteAllText((Join-Path $ImageDir "board_port.conf"), $Conf)
+    $ImageCMake = Join-Path $ImageDir "CMakeLists.txt"
+    $Text = [System.IO.File]::ReadAllText($ImageCMake)
+    $Patched = [regex]::new('(?m)^(project\()').Replace($Text, "set(CUSTOM_PRJ_CONF_PATHS `${CMAKE_CURRENT_LIST_DIR}/board_port.conf)`n`$1", 1)
+    if ($Patched -eq $Text) { throw "Cannot select the board-port files in $ImageCMake." }
+    [System.IO.File]::WriteAllText($ImageCMake, $Patched + "`nmcux_add_source(`n    SOURCES $($Files -join ' ')`n)`n")
 }
 
 if (-not (Test-Path (Join-Path $Overlay "primary/sysbuild.cmake")) -or -not (Test-Path (Join-Path $Overlay "secondary/CMakeLists.txt"))) {
@@ -128,6 +138,8 @@ $PrimaryConf = Join-Path $Overlay "primary/prj.conf"
 if ($McuBoot) {
     [System.IO.File]::AppendAllText($PrimaryCMake, [System.IO.File]::ReadAllText((Join-Path $ExampleDir "mcuboot/primary.cmake")))
     [System.IO.File]::AppendAllText((Join-Path $Overlay "primary/prj.conf"), [System.IO.File]::ReadAllText((Join-Path $ExampleDir "mcuboot/primary.conf")))
+} else {
+    [System.IO.File]::AppendAllText($PrimaryCMake, [System.IO.File]::ReadAllText((Join-Path $ExampleDir "standalone/primary.cmake")))
 }
 $AppMacros = @()
 if ($Version) {

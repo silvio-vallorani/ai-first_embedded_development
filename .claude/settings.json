@@ -33,8 +33,19 @@
       "Bash(gh pr create*)",
       "Bash(gh pr merge*)",
       "Bash(gh workflow run*)",
-      "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py flash*)",
-      "Bash(.venv/bin/python scripts/rt1180_mcuboot.py flash*)"
+      "Bash(.venv/Scripts/python.exe scripts/rt1180_mcuboot.py *flash*)",
+      "Bash(.venv/bin/python scripts/rt1180_mcuboot.py *flash*)",
+      "Bash(*JLink.exe*)",
+      "Bash(*JLinkExe*)",
+      "Bash(*LinkServer*)",
+      "mcp__jlink__flash",
+      "mcp__jlink__erase",
+      "mcp__jlink__write_memory",
+      "mcp__jlink__probe_command",
+      "mcp__jlink__reset",
+      "mcp__jlink__gdb_load",
+      "mcp__jlink__gdb_command",
+      "mcp__jlink__rtt_send"
     ]
   },
   "enabledMcpjsonServers": ["context7"],
